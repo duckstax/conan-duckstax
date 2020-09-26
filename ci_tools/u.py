@@ -306,9 +306,8 @@ def get_builder_default(shared_option_name=None,
                         reference=None,
                         **kwargs):
     recipe = get_recipe_path(cwd)
-
     builder = get_builder(build_policy, cwd=cwd, **kwargs)
-    if shared_option_name is None and is_shared():
+    if shared_option_name is None and is_shared(recipe):
         shared_option_name = "%s:shared" % get_name_from_recipe(recipe=recipe)
 
     builder.add_common_builds(
