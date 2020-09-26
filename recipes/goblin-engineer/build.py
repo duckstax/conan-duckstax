@@ -1,4 +1,4 @@
-from utils import is_pure_c,get_builder_default
+from ci_tools import is_pure_c, get_builder_default
 import os
 
 if __name__ == "__main__":

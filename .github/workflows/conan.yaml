@@ -20,7 +20,7 @@ jobs:
         env:
           splitByBuildTypes: ${{ env.splitByBuildTypes }}
         run: |
-          MATRIX=$(python3 generate_ci_jobs.py)
+          MATRIX=$(python3 ci_tools.generate_ci_jobs.py)
           echo "${MATRIX}"
           echo "::set-output name=matrix::${MATRIX}"
   conan:
@@ -68,4 +68,5 @@ jobs:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_LOGIN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         run: |
-          python recipes/goblin-engineer/build.py
+          export PYTHONPATH=$(pwd)
+          python3 recipes/goblin-engineer/build.py

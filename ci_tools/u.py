@@ -7,12 +7,15 @@ from cpt.packager import ConanMultiPackager
 from cpt.remotes import RemotesManager
 from cpt.tools import split_colon_env
 
-from paths import (
-    USERNAME,
-    LOGIN_USERNAME,
-    REPO_NAME,
-    REPO_URL
-)
+USERNAME = "cyberduckninja"
+LOGIN_USERNAME = ""
+REPO_NAME = ""
+REPO_URL = ""
+
+
+from cpt.printer import Printer
+
+printer = Printer()
 
 
 def get_recipe_path(cwd=None):
