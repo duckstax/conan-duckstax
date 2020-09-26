@@ -13,14 +13,14 @@ jobs:
           python-version: "3.8"
       - name: Install Package Tools
         run: |
-          pip install bincrafters_package_tools
+          pip install conan conan_package_tools>=0.32.0
           conan user
       - name: Generate Job Matrix
         id: set-matrix
         env:
           splitByBuildTypes: ${{ env.splitByBuildTypes }}
         run: |
-          MATRIX=$(generate_ci_jobs)
+          MATRIX=$(python3 generate_ci_jobs.py)
           echo "${MATRIX}"
           echo "::set-output name=matrix::${MATRIX}"
   conan:

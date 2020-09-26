@@ -1,6 +1,7 @@
 import json
 import sys
 
+
 def generate_ci_jobs() -> str:
     matrix = {"config": [
         {"name": "GCC 4.9 Debug", "compiler": "GCC", "version": "4.9", "os": "ubuntu-18.04", "buildType": "Debug"},
@@ -35,17 +36,9 @@ def generate_ci_jobs() -> str:
     return matrix_string
 
 
-def run(*args):
+def main():
     print(generate_ci_jobs())
 
 
-def cli():
-    run(sys.argv[1:])
-
-
 if __name__ == '__main__':
-    try:
-        sys.exit(cli())
-    except Exception as error:
-        print("ERROR: {}".format(error))
-        sys.exit(1)
+    main()
