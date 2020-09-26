@@ -10,9 +10,5 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     pyenv activate conan
 fi
 
-cd ..
-for path_name in $(find recipes -type f | grep "build.py")
-do
-  python ${path_name}
-done
+python runner.py
 
