@@ -1,16 +1,7 @@
-from conan.packager import ConanMultiPackager
-import copy
-import platform
+from utils import is_pure_c,get_builder_default
+import os
 
 if __name__ == "__main__":
-    builder = ConanMultiPackager()
-    # builder.add_common_builds(shared_option_name="jsoncpp:shared", pure_c=False)
-
-    # items = []
-    # for settings, options, env_vars, build_requires, reference in builder.items:
-    # skip mingw cross-builds
-    # if not (platform.system() == "Windows" and settings["compiler"] == "gcc" and settings["arch"] == "x86"):
-    #    items.append([settings, options, env_vars, build_requires, reference])
-    # builder.items = items
-
+    recipe_is_pure_c = is_pure_c()
+    builder = get_builder_default(pure_c=recipe_is_pure_c, cwd=os.path.dirname(os.path.abspath(__file__)))
     builder.run()
