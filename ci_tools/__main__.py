@@ -20,19 +20,19 @@ class Data:
 def main():
     printer.print_message("Enabling Conan download cache ...")
     tmpdir = os.path.join(tempfile.gettempdir(), "conan")
-
+    #print(-5)
     os.makedirs(tmpdir, mode=0o777)
     os.chmod(tmpdir, mode=0o777)
-
+    #print(-4)
     os.system('conan config set storage.download_cache="{}"'.format(tmpdir))
     os.environ["CONAN_DOCKER_ENTRY_SCRIPT"] = "conan config set storage.download_cache='{}'".format(tmpdir)
     os.environ["CONAN_DOCKER_RUN_OPTIONS"] = "-v '{}':'/tmp/conan'".format(tmpdir)
 
     os.environ["CONAN_SYSREQUIRES_MODE"] = "enabled"
-
+    #print(-3)
     path = "recipes"
-    filenames = "build.py"
-
+    #filenames = "build.py"
+    filenames = "conanfile.py"
     f = []
 
     for root, dirs, files in os.walk(path):
@@ -40,10 +40,13 @@ def main():
             if file.endswith(filenames):
                 path = os.path.dirname(os.path.abspath(file))
                 f.append(Data(root, path + "/" + os.path.join(root, file),path+"/"+root))
-
+    #print(-2)
+    #print(f)
     for i in f:
-        recipe_is_pure_c = u.is_pure_c()
-        builder = u.get_builder_default(pure_c=recipe_is_pure_c, cwd=i.absolut_path)
+    #    print(1)
+        #recipe_is_pure_c = u.is_pure_c()
+    #    print(2)
+        builder = u.get_builder_default( cwd=i.absolut_path)
         builder.run()
 
 
