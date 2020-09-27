@@ -69,4 +69,4 @@ jobs:
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         run: |
           export PYTHONPATH=$(pwd)
-          python3 recipes/goblin-engineer/build.py
+          python3 ci_tools
