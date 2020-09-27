@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
 
-import sys
-import tempfile
 import os
-from subprocess import Popen, PIPE, run
+import tempfile
+from subprocess import PIPE, run
 
-from u import printer
+from cpt.printer import Printer
 
+printer = Printer()
 
-def _flush_output():
-    sys.stderr.flush()
-    sys.stdout.flush()
-
+import u
 
 class Data:
-    def __init__(self, path, file):
+    def __init__(self, path, file,ap):
         self.path = path
         self.run_file = file
+        self.absolut_path=ap
 
 
 def main():
@@ -41,13 +39,12 @@ def main():
         for file in files:
             if file.endswith(filenames):
                 path = os.path.dirname(os.path.abspath(file))
-                f.append(Data(root, path+"/"+os.path.join(root, file)))
+                f.append(Data(root, path + "/" + os.path.join(root, file),path+"/"+root))
 
     for i in f:
-        bashCommand = "python3 " + i.run_file
-        print(bashCommand)
-        bashCommand = bashCommand.split()
-        run(bashCommand, stdout=PIPE, cwd=i.path, check=True)
+        recipe_is_pure_c = u.is_pure_c()
+        builder = u.get_builder_default(pure_c=recipe_is_pure_c, cwd=i.absolut_path)
+        builder.run()
 
 
 if __name__ == "__main__":

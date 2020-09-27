@@ -6,14 +6,12 @@ from conans.client import conan_api
 from cpt.packager import ConanMultiPackager
 from cpt.remotes import RemotesManager
 from cpt.tools import split_colon_env
+from cpt.printer import Printer
 
 USERNAME = "cyberduckninja"
 LOGIN_USERNAME = ""
 REPO_NAME = ""
 REPO_URL = ""
-
-
-from cpt.printer import Printer
 
 printer = Printer()
 
@@ -126,8 +124,7 @@ def is_shared(recipe=None):
 def get_repo_name_from_ci():
     reponame_a = os.getenv("APPVEYOR_REPO_NAME", "")
     reponame_t = os.getenv("TRAVIS_REPO_SLUG", "")
-    reponame_c = "%s/%s" % (os.getenv("CIRCLE_PROJECT_USERNAME", ""),
-                            os.getenv("CIRCLE_PROJECT_REPONAME", ""))
+    reponame_c = "%s/%s" % (os.getenv("CIRCLE_PROJECT_USERNAME", ""), os.getenv("CIRCLE_PROJECT_REPONAME", ""))
     reponame_azp = os.getenv("BUILD_REPOSITORY_NAME", "")
     reponame_g = os.getenv("GITHUB_REPOSITORY", "")
     return reponame_a or reponame_t or reponame_c or reponame_azp or reponame_g
@@ -189,12 +186,10 @@ def get_version(recipe=None):
 
 
 def get_conan_vars(recipe=None, kwargs={}):
-    username = kwargs.get("username", os.getenv(
-        "CONAN_USERNAME", get_username_from_ci() or USERNAME))
+    username = kwargs.get("username", os.getenv("CONAN_USERNAME", get_username_from_ci() or USERNAME))
     kwargs["channel"] = kwargs.get("channel", os.getenv("CONAN_CHANNEL", get_channel_from_ci()))
     version = os.getenv("CONAN_VERSION", get_version(recipe=recipe))
-    kwargs["login_username"] = kwargs.get("login_username", os.getenv(
-        "CONAN_LOGIN_USERNAME", LOGIN_USERNAME))
+    kwargs["login_username"] = kwargs.get("login_username", os.getenv("CONAN_LOGIN_USERNAME", LOGIN_USERNAME))
     kwargs["username"] = username
 
     return username, version, kwargs
@@ -308,7 +303,7 @@ def get_builder_default(shared_option_name=None,
     recipe = get_recipe_path(cwd)
     builder = get_builder(build_policy, cwd=cwd, **kwargs)
     if shared_option_name is None and is_shared(recipe):
-        shared_option_name = "%s:shared" % get_name_from_recipe(recipe=recipe)
+        shared_option_name = "%s:shared" % get_name_from_recipe(recipe)
 
     builder.add_common_builds(
         shared_option_name=shared_option_name,
