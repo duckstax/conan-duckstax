@@ -69,5 +69,4 @@ jobs:
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         run: |
           export PYTHONPATH=$(pwd)
-          conan remote add bincrafters  https://api.bintray.com/conan/bincrafters/public-conan
           python3 ci_tools

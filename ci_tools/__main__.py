@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import subprocess
 import tempfile
 
 from cpt.printer import Printer
@@ -67,8 +67,14 @@ def main():
     os.system('conan config set storage.download_cache="{}"'.format(tmpdir))
     os.environ["CONAN_DOCKER_ENTRY_SCRIPT"] = "conan config set storage.download_cache='{}'".format(tmpdir)
     os.environ["CONAN_DOCKER_RUN_OPTIONS"] = "-v '{}':'/tmp/conan'".format(tmpdir)
-
     os.environ["CONAN_SYSREQUIRES_MODE"] = "enabled"
+
+    process = subprocess.Popen("conan remote add bincrafters  https://api.bintray.com/conan/bincrafters/public-conan".split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+    process = subprocess.Popen("conan remote add conan-center https://conan.bintray.com".split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
     path = "recipes"
     filenames = "conanfile.py"
     f = []
