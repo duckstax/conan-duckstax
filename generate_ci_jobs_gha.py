@@ -45,7 +45,7 @@ def main():
     args = parser.parse_args()
     with open(args.config) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-        print(data)
+        print(json.dumps(data["matrix"]))
 
 
 if __name__ == '__main__':
