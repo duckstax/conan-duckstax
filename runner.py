@@ -9,7 +9,7 @@ from cpt.printer import Printer
 
 printer = Printer()
 
-from ci_tools_gha.utils import get_builder_default
+from ci_tools_gha.utils import get_builder_default, is_pure_c
 
 gha_hack = True
 
@@ -90,7 +90,8 @@ def main():
     try:
         for i in f:
             gha_hack_copy(i)
-            builder = get_builder_default(configuration)
+            recipe_is_pure_c = is_pure_c()
+            builder = get_builder_default(configuration,pure_c=recipe_is_pure_c)
             builder.run()
             gha_hack_removed()
     except Exception as e:
