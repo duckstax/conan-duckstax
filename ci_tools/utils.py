@@ -8,11 +8,6 @@ from cpt.remotes import RemotesManager
 from cpt.tools import split_colon_env
 from cpt.printer import Printer
 
-USERNAME = "cyberduckninja"
-LOGIN_USERNAME = ""
-REPO_NAME = ""
-REPO_URL = ""
-
 printer = Printer()
 
 
@@ -185,11 +180,11 @@ def get_version(recipe=None):
     return ci_ver if ci_ver else get_version_from_recipe(recipe=recipe)
 
 
-def get_conan_vars(recipe=None, kwargs={}):
-    username = kwargs.get("username", os.getenv("CONAN_USERNAME", get_username_from_ci() or USERNAME))
+def get_conan_vars(configuration, recipe=None, kwargs={}):
+    username = kwargs.get("username", os.getenv("CONAN_USERNAME", get_username_from_ci() or configuration["USERNAME"]))
     kwargs["channel"] = kwargs.get("channel", os.getenv("CONAN_CHANNEL", get_channel_from_ci()))
     version = os.getenv("CONAN_VERSION", get_version(recipe=recipe))
-    kwargs["login_username"] = kwargs.get("login_username", os.getenv("CONAN_LOGIN_USERNAME", LOGIN_USERNAME))
+    kwargs["login_username"] = kwargs.get("login_username", os.getenv("CONAN_LOGIN_USERNAME", configuration["LOGIN_USERNAME"]))
     kwargs["username"] = username
 
     return username, version, kwargs
@@ -199,42 +194,36 @@ def get_user_repository(username, repository_name):
     return "https://api.bintray.com/conan/{0}/{1}".format(username.lower(), repository_name)
 
 
-def get_conan_upload(username):
+def get_conan_upload(configuration, username):
     upload = os.getenv("CONAN_UPLOAD")
     if upload:
         return upload.split('@') if '@' in upload else upload
 
-    repository_name = os.getenv("BINTRAY_REPOSITORY", REPO_NAME)
+    repository_name = os.getenv("BINTRAY_REPOSITORY", configuration["REPO_NAME"])
     return get_user_repository(username, repository_name)
 
 
-def get_conan_upload_param(username, kwargs):
+def get_conan_upload_param(configuration, username, kwargs):
     if "upload" not in kwargs:
-        kwargs["upload"] = get_conan_upload(username)
+        kwargs["upload"] = get_conan_upload(configuration, username)
     return kwargs
 
 
-def get_conan_remotes(username, kwargs):
+def get_conan_remotes(configuration, username, kwargs):
     remotes = None
     if "remotes" not in kwargs:
-        remotes = os.getenv("CONAN_REMOTES")
-        if remotes:
-            remotes = remotes.split(',')
-            for remote in reversed(remotes):
+        remotes = []
+        remotes_env = os.getenv("CONAN_REMOTES")
+        if remotes_env:
+            remotes_env = remotes_env.split(',')
+            for remote in reversed(remotes_env):
                 if '@' in remote:
-                    remote = RemotesManager._get_remote_from_str(remote, var_name=remote)
-        else:
-            # While redundant, this moves upload remote to position 0.
-            remotes = [get_conan_upload(username)]
-            # Add bincrafters repository for other users, e.g. if the package would
-            # require other packages from the bincrafters repo.
-            bincrafters_user = USERNAME
-            if username != bincrafters_user:
-                remotes.append(get_conan_upload(bincrafters_user))
+                    remotes.append(RemotesManager._get_remote_from_str(remote, var_name=remote))
 
-            # Force Bincrafters repo on remotes
-            if REPO_URL not in remotes:
-                remotes.append(REPO_URL)
+        remotes.append(get_conan_upload(configuration, username))
+        remotes.append(get_conan_upload(configuration, username))
+        for i in configuration["remotes"]:
+            remotes.append(i)
 
     kwargs["remotes"] = remotes
     return kwargs
@@ -274,13 +263,13 @@ def get_reference(name, version, kwargs):
     return kwargs
 
 
-def get_builder(build_policy=None, cwd=None, **kwargs):
+def get_builder(configuration, build_policy=None, cwd=None, **kwargs):
     recipe = get_recipe_path(cwd)
     name = get_name_from_recipe(recipe=recipe)
-    username, version, kwargs = get_conan_vars(recipe=recipe, kwargs=kwargs)
+    username, version, kwargs = get_conan_vars(configuration, recipe=recipe, kwargs=kwargs)
     kwargs = get_reference(name, version, kwargs)
-    kwargs = get_conan_upload_param(username, kwargs)
-    kwargs = get_conan_remotes(username, kwargs)
+    kwargs = get_conan_upload_param(configuration, username, kwargs)
+    kwargs = get_conan_remotes(configuration, username, kwargs)
     kwargs = get_upload_when_stable(kwargs)
     kwargs = get_stable_branch_pattern(kwargs)
     kwargs = get_archs(kwargs)
@@ -293,15 +282,17 @@ def get_builder(build_policy=None, cwd=None, **kwargs):
     return builder
 
 
-def get_builder_default(shared_option_name=None,
-                        pure_c=True,
-                        dll_with_static_runtime=False,
-                        build_policy=None,
-                        cwd=None,
-                        reference=None,
-                        **kwargs):
+def get_builder_default(
+        configuration,
+        shared_option_name=None,
+        pure_c=True,
+        dll_with_static_runtime=False,
+        build_policy=None,
+        cwd=None,
+        reference=None,
+        **kwargs):
     recipe = get_recipe_path(cwd)
-    builder = get_builder(build_policy, cwd=cwd, **kwargs)
+    builder = get_builder(configuration, build_policy, cwd=cwd, **kwargs)
     if shared_option_name is None and is_shared(recipe):
         shared_option_name = "%s:shared" % get_name_from_recipe(recipe)
 

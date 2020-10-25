@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
+import argparse
 import subprocess
 import tempfile
 
+import yaml
 from cpt.printer import Printer
 
 printer = Printer()
 
-import u
+from ci_tools.utils import get_builder_default
 
 gha_hack = True
 
-import os, shutil
+import os
+import shutil
 
 
 def copytree(src, dst, symlinks=False, ignore=None):
@@ -50,30 +53,21 @@ def gha_hack_removed():
     os.remove(conanfile_dst)
 
 
-class Data:
-    def __init__(self, path, file, ap):
-        self.path = path
-        self.run_file = file
-        self.absolut_path = ap
-
-
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', action='store', type=str, required=True)
+    args = parser.parse_args()
+    with open(args.config) as f:
+        configuration = yaml.load(f, Loader=yaml.FullLoader)
+
     printer.print_message("Enabling Conan download cache ...")
     tmpdir = os.path.join(tempfile.gettempdir(), "conan")
-    # print(-5)
     os.makedirs(tmpdir, mode=0o777)
     os.chmod(tmpdir, mode=0o777)
-    # print(-4)
     os.system('conan config set storage.download_cache="{}"'.format(tmpdir))
     os.environ["CONAN_DOCKER_ENTRY_SCRIPT"] = "conan config set storage.download_cache='{}'".format(tmpdir)
     os.environ["CONAN_DOCKER_RUN_OPTIONS"] = "-v '{}':'/tmp/conan'".format(tmpdir)
     os.environ["CONAN_SYSREQUIRES_MODE"] = "enabled"
-
-    process = subprocess.Popen("conan remote add bincrafters  https://api.bintray.com/conan/bincrafters/public-conan".split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-
-    process = subprocess.Popen("conan remote add conan-center https://conan.bintray.com".split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
 
     path = "recipes"
     filenames = "conanfile.py"
@@ -85,12 +79,15 @@ def main():
                 path = os.path.dirname(os.path.abspath(file))
                 if not "/test_package" in root:
                     f.append(path + "/" + root)
-
-    for i in f:
-        # recipe_is_pure_c = u.is_pure_c()
-        gha_hack_copy(i)
-        builder = u.get_builder_default()
-        builder.run()
+    try:
+        for i in f:
+            gha_hack_copy(i)
+            builder = get_builder_default(configuration)
+            builder.run()
+    except Exception as e:
+        print(e)
+        pass
+    finally:
         gha_hack_removed()
 
 

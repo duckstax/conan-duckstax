@@ -20,7 +20,7 @@ jobs:
         env:
           splitByBuildTypes: ${{ env.splitByBuildTypes }}
         run: |
-          MATRIX=$(python3 ci_tools/generate_ci_jobs.py)
+          MATRIX=$(python3 ci_tools/generate_ci_jobs_gha.py --config configuration.yaml)
           echo "${MATRIX}"
           echo "::set-output name=matrix::${MATRIX}"
   conan:
