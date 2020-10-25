@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import errno
 import tempfile
 
 import yaml
@@ -37,7 +38,14 @@ def gha_hack_copy(src):
     conanfile_src = os.path.join(src, "conanfile.py")
     conanfile_dst = os.path.join(dst, "conanfile.py")
 
-    shutil.copytree(test_package_src, test_package_dst, symlinks, ignore)
+    try:
+        shutil.copytree(test_package_src, test_package_dst, symlinks, ignore)
+    except OSError as e:
+        # If the error was caused because the source wasn't a directory
+        if e.errno == errno.ENOTDIR:
+            shutil.copy(test_package_src, test_package_dst)
+        else:
+            print('Directory not copied. Error: %s' % e)
     shutil.copy2(conandata_src, conandata_dst)
     shutil.copy2(conanfile_src, conanfile_dst)
 
@@ -84,11 +92,10 @@ def main():
             gha_hack_copy(i)
             builder = get_builder_default(configuration)
             builder.run()
+            gha_hack_removed()
     except Exception as e:
         gha_hack_removed()
         raise e
-    finally:
-        gha_hack_removed()
 
 
 if __name__ == "__main__":
