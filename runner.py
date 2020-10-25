@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+
 import argparse
-import subprocess
 import tempfile
 
 import yaml
@@ -8,7 +8,7 @@ from cpt.printer import Printer
 
 printer = Printer()
 
-from ci_tools.utils import get_builder_default
+from ci_tools_gha.utils import get_builder_default
 
 gha_hack = True
 
@@ -77,7 +77,7 @@ def main():
         for file in files:
             if file.endswith(filenames):
                 path = os.path.dirname(os.path.abspath(file))
-                if not "/test_package" in root:
+                if not "test_package" in root:
                     f.append(path + "/" + root)
     try:
         for i in f:
@@ -85,8 +85,8 @@ def main():
             builder = get_builder_default(configuration)
             builder.run()
     except Exception as e:
-        print(e)
-        pass
+        gha_hack_removed()
+        raise e
     finally:
         gha_hack_removed()
 
