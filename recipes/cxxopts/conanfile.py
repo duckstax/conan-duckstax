@@ -7,7 +7,7 @@ class CxxOptsConan(ConanFile):
     version = "2.2.0"
     description = "Lightweight C++ command line option parser"
     topics = ("conan", "cxxopts", "command line")
-    url = "https://github.com/jinncrafters/conan-cxxopts"
+    url = "https://github.com/cyberduckninja/conan-cxxopts"
     homepage = "https://github.com/jarro2783/cxxopts/"
     license = "MIT"
     no_copy_source = True
