@@ -3,6 +3,7 @@
 import argparse
 import errno
 import tempfile
+from pathlib import Path
 
 import yaml
 from cpt.printer import Printer
@@ -38,6 +39,13 @@ def gha_hack_copy(src):
     conanfile_src = os.path.join(src, "conanfile.py")
     conanfile_dst = os.path.join(dst, "conanfile.py")
 
+    cmakelist_src = os.path.join(src, "CMakeLists.txt")
+    cmakelist_dst = os.path.join(dst, "CMakeLists.txt")
+
+    my_file = Path(cmakelist_src)
+    if my_file.is_file():
+        shutil.copy2(cmakelist_src, cmakelist_dst)
+
     try:
         shutil.copytree(test_package_src, test_package_dst, symlinks, ignore)
     except OSError as e:
@@ -57,9 +65,14 @@ def gha_hack_removed():
     conanfile_dst = os.path.join(dst, "conanfile.py")
 
     shutil.rmtree(test_package_dst, ignore_errors=True)
-    print(conandata_dst)
     os.remove(conandata_dst)
     os.remove(conanfile_dst)
+
+    cmakelist_dst = os.path.join(dst, "CMakeLists.txt")
+
+    my_file = Path(cmakelist_dst)
+    if my_file.is_file():
+        os.remove(my_file)
 
 
 def init():
@@ -85,6 +98,8 @@ def main():
     with open(args.config) as f:
         configuration = yaml.load(f, Loader=yaml.FullLoader)
 
+    init()
+
     path = "recipes"
     filenames = "conanfile.py"
     f = []
@@ -97,16 +112,13 @@ def main():
                     f.append(path + "/" + root)
     try:
         for i in f:
-            init()
             gha_hack_copy(i)
             recipe_is_pure_c = is_pure_c()
             builder = get_builder_default(configuration, pure_c=recipe_is_pure_c)
             builder.run()
             gha_hack_removed()
-            deinit()
     except Exception as e:
         gha_hack_removed()
-        deinit()
         raise e
 
 
