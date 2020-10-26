@@ -57,6 +57,7 @@ def gha_hack_removed():
     conanfile_dst = os.path.join(dst, "conanfile.py")
 
     shutil.rmtree(test_package_dst, ignore_errors=True)
+    print(conandata_dst)
     os.remove(conandata_dst)
     os.remove(conanfile_dst)
 
