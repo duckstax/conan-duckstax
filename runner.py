@@ -61,13 +61,7 @@ def gha_hack_removed():
     os.remove(conanfile_dst)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', action='store', type=str, required=True)
-    args = parser.parse_args()
-    with open(args.config) as f:
-        configuration = yaml.load(f, Loader=yaml.FullLoader)
-
+def init():
     printer.print_message("Enabling Conan download cache ...")
     tmpdir = os.path.join(tempfile.gettempdir(), "conan")
     os.makedirs(tmpdir, mode=0o777)
@@ -76,6 +70,19 @@ def main():
     os.environ["CONAN_DOCKER_ENTRY_SCRIPT"] = "conan config set storage.download_cache='{}'".format(tmpdir)
     os.environ["CONAN_DOCKER_RUN_OPTIONS"] = "-v '{}':'/tmp/conan'".format(tmpdir)
     os.environ["CONAN_SYSREQUIRES_MODE"] = "enabled"
+
+
+def deinit():
+    tmpdir = os.path.join(tempfile.gettempdir(), "conan")
+    shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', action='store', type=str, required=True)
+    args = parser.parse_args()
+    with open(args.config) as f:
+        configuration = yaml.load(f, Loader=yaml.FullLoader)
 
     path = "recipes"
     filenames = "conanfile.py"
@@ -89,13 +96,16 @@ def main():
                     f.append(path + "/" + root)
     try:
         for i in f:
+            init()
             gha_hack_copy(i)
             recipe_is_pure_c = is_pure_c()
-            builder = get_builder_default(configuration,pure_c=recipe_is_pure_c)
+            builder = get_builder_default(configuration, pure_c=recipe_is_pure_c)
             builder.run()
             gha_hack_removed()
+            deinit()
     except Exception as e:
         gha_hack_removed()
+        deinit()
         raise e
 
 
