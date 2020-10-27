@@ -24,14 +24,13 @@ class BoostUrlConan(ConanFile):
 
     def source(self):
         git = tools.Git()
-        git.clone(self.url)
-        tag = "tags/"+self.version
+        git.clone(self.url, "master")
+        tag = "tags/" + self.version
         git.checkout(tag)
         self._source_subfolder = git.folder
 
     def package_info(self):
         self.cpp_info.defines = []
-
 
     def _configure_cmake(self):
         if not self._cmake:
