@@ -29,7 +29,7 @@ matrix : {"config": [
 
 USERNAME: "cyberduckninja"
 LOGIN_USERNAME: ""
-REPO_NAME: "https://api.bintray.com/conan/cyberduckninja/conan"
+REPO_NAME: "cyberduckninja"
 REPO_URL: "conan"
 remotes: [
 "https://conan.bintray.com",

@@ -161,7 +161,6 @@ def get_conan_remotes(configuration, username, kwargs):
                     remotes.append(RemotesManager._get_remote_from_str(remote, var_name=remote))
 
         remotes.append(get_conan_upload(configuration, username))
-        remotes.append(get_conan_upload(configuration, username))
         for i in configuration["remotes"]:
             remotes.append(i)
 
