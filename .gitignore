@@ -120,6 +120,3 @@ venv.bak/
 # scons build files
 *.dblite
 
-test_package
-conandata.yml
-conanfile.py

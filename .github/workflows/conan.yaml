@@ -69,4 +69,4 @@ jobs:
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         run: |
           export PYTHONPATH=$(pwd)
-          python3 runner.py --config configuration.yaml
+          python3 runner_gha.py --config configuration.yaml
