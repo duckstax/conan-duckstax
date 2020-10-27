@@ -124,14 +124,10 @@ def get_conan_vars(configuration, recipe=None, kwargs={}):
     username = kwargs.get("username", os.getenv("CONAN_USERNAME", configuration["USERNAME"]))
     kwargs["channel"] = kwargs.get("channel", os.getenv("CONAN_CHANNEL", configuration["channel"]))
     version = os.getenv("CONAN_VERSION", get_version(recipe=recipe))
-    kwargs["login_username"] = kwargs.get("login_username", os.getenv("CONAN_LOGIN_USERNAME", configuration["LOGIN_USERNAME"]))
+    kwargs["login_username"] = kwargs.get("login_username", os.getenv("CONAN_LOGIN_USERNAME"))
     kwargs["username"] = username
 
     return username, version, kwargs
-
-
-def get_user_repository(username, repository_name):
-    return "https://api.bintray.com/conan/{0}/{1}".format(username.lower(), repository_name)
 
 
 def get_conan_upload(configuration, username):
@@ -139,8 +135,7 @@ def get_conan_upload(configuration, username):
     if upload:
         return upload.split('@') if '@' in upload else upload
 
-    repository_name = os.getenv("BINTRAY_REPOSITORY", configuration["REPO_NAME"])
-    return get_user_repository(username, repository_name)
+    return configuration["upload_remote"]
 
 
 def get_conan_upload_param(configuration, username, kwargs):
@@ -160,7 +155,7 @@ def get_conan_remotes(configuration, username, kwargs):
                 if '@' in remote:
                     remotes.append(RemotesManager._get_remote_from_str(remote, var_name=remote))
 
-        remotes.append(get_conan_upload(configuration, username))
+        remotes.append(configuration["upload_remote"])
         for i in configuration["remotes"]:
             remotes.append(i)
 

@@ -28,13 +28,9 @@ matrix : {"config": [
     ]}
 
 USERNAME: "cyberduckninja"
-LOGIN_USERNAME: ""
-REPO_NAME: "cyberduckninja"
-REPO_URL: "conan"
+upload_remote: "https://api.bintray.com/conan/cyberduckninja/conan"
 remotes: [
 "https://conan.bintray.com",
 "https://api.bintray.com/conan/bincrafters/public-conan",
-"https://api.bintray.com/conan/cyberduckninja/conan"
-
 ]
 channel: stable
