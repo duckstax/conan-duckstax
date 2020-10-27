@@ -116,73 +116,13 @@ def is_shared(recipe=None):
     return "shared" in match.groups()[0]
 
 
-def get_repo_name_from_ci():
-    reponame_a = os.getenv("APPVEYOR_REPO_NAME", "")
-    reponame_t = os.getenv("TRAVIS_REPO_SLUG", "")
-    reponame_c = "%s/%s" % (os.getenv("CIRCLE_PROJECT_USERNAME", ""), os.getenv("CIRCLE_PROJECT_REPONAME", ""))
-    reponame_azp = os.getenv("BUILD_REPOSITORY_NAME", "")
-    reponame_g = os.getenv("GITHUB_REPOSITORY", "")
-    return reponame_a or reponame_t or reponame_c or reponame_azp or reponame_g
-
-
-def get_repo_branch_from_ci():
-    # TODO: Try one day again to migrate this to CPTs CI Manager
-    # Since CPTs CI Managers varies in logic this break to much of the existing behaviour
-    # in a first attempt (Croydon)
-    # ~~Remove GHA special handling after CPT 0.32.0 is released~~
-    repobranch_a = os.getenv("APPVEYOR_REPO_BRANCH", "")
-    repobranch_t = os.getenv("TRAVIS_BRANCH", "")
-    repobranch_c = os.getenv("CIRCLE_BRANCH", "")
-    repobranch_azp = os.getenv("BUILD_SOURCEBRANCH", "")
-    if repobranch_azp.startswith("refs/pull/"):
-        repobranch_azp = os.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH", "")
-
-    def _clean_branch(branch):
-        return branch[11:] if branch.startswith("refs/heads/") else branch
-
-    repobranch_azp = _clean_branch(repobranch_azp)
-    repobranch_g = _clean_branch(os.getenv("GITHUB_REF", ""))
-    if os.getenv("GITHUB_EVENT_NAME", "") == "pull_request":
-        repobranch_g = os.getenv("GITHUB_BASE_REF", "")
-
-    return repobranch_a or repobranch_t or repobranch_c or repobranch_azp or repobranch_g
-
-
-def get_ci_vars():
-    reponame = get_repo_name_from_ci()
-    reponame_split = reponame.split("/")
-
-    repobranch = get_repo_branch_from_ci()
-    repobranch_split = repobranch.split("/")
-
-    username, _ = reponame_split if len(reponame_split) > 1 else ["", ""]
-    channel, version = repobranch_split if len(repobranch_split) > 1 else ["", ""]
-    return username, channel, version
-
-
-def get_username_from_ci():
-    username, _, _ = get_ci_vars()
-    return username
-
-
-def get_channel_from_ci():
-    _, channel, _ = get_ci_vars()
-    return channel
-
-
-def get_version_from_ci():
-    _, _, version = get_ci_vars()
-    return version
-
-
 def get_version(recipe=None):
-    ci_ver = get_version_from_ci()
-    return ci_ver if ci_ver else get_version_from_recipe(recipe=recipe)
+    return get_version_from_recipe(recipe=recipe)
 
 
 def get_conan_vars(configuration, recipe=None, kwargs={}):
-    username = kwargs.get("username", os.getenv("CONAN_USERNAME", get_username_from_ci() or configuration["USERNAME"]))
-    kwargs["channel"] = kwargs.get("channel", os.getenv("CONAN_CHANNEL", get_channel_from_ci()))
+    username = kwargs.get("username", os.getenv("CONAN_USERNAME", configuration["USERNAME"]))
+    kwargs["channel"] = kwargs.get("channel", os.getenv("CONAN_CHANNEL", configuration["channel"]))
     version = os.getenv("CONAN_VERSION", get_version(recipe=recipe))
     kwargs["login_username"] = kwargs.get("login_username", os.getenv("CONAN_LOGIN_USERNAME", configuration["LOGIN_USERNAME"]))
     kwargs["username"] = username

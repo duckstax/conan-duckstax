@@ -37,3 +37,4 @@ remotes: [
 "https://api.bintray.com/conan/cyberduckninja/conan"
 
 ]
+channel: stable
