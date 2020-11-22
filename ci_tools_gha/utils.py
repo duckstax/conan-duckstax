@@ -139,7 +139,7 @@ def get_conan_upload(configuration, username):
 
 
 def get_conan_upload_param(configuration, username, kwargs):
-    if "upload" not in kwargs:
+    if "upload" not in kwargs or (configuration["upload"] ):
         kwargs["upload"] = get_conan_upload(configuration, username)
     return kwargs
 
@@ -212,7 +212,6 @@ def get_builder(configuration, build_policy=None, cwd=None, **kwargs):
         build_policy=build_policy,
         cwd=cwd,
         **kwargs)
-
     return builder
 
 

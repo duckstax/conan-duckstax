@@ -34,3 +34,4 @@ remotes: [
 "https://api.bintray.com/conan/bincrafters/public-conan",
 ]
 channel: stable
+upload: FALSE

@@ -37,7 +37,7 @@ class GoblinEngineerConan(ConanFile):
     _build_subfolder = "build_subfolder"
 
     requires = (
-        "boost/1.71.0@conan/stable",
+        "boost/1.74.0",
         "actor-zeta/1.0.0a4@cyberduckninja/stable"
     )
 

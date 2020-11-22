@@ -1,4 +1,4 @@
 sources:
-  "":
-    url: ""
-    sha256: ""
+  "alpha":
+    url: "https://github.com/CPPAlliance/url/archive/alpha.tar.gz"
+    sha256: "9952d42e9706e40e5b8a3a646ddc78fb655d2b29b86037970f7978cc80693677"
