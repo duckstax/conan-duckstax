@@ -13,7 +13,7 @@ jobs:
           python-version: "3.8"
       - name: Install Package Tools
         run: |
-          pip install conan conan_package_tools>=0.32.0
+          pip install conan conan_package_tools
           conan user
       - name: Generate Job Matrix
         id: set-matrix
