@@ -20,13 +20,15 @@ class ActorZetaConan(ConanFile):
     options = {
         "exceptions_disable": [True, False],
         "rtti_disable": [True, False],
-        "shared": [True, False]
+        "shared": [True, False],
+        "cxx_standard": [11, 14, 17]
     }
 
     default_options = {
         "exceptions_disable": False,
         "rtti_disable": False,
-        "shared": False
+        "shared": False,
+        "cxx_standard": 11
     }
 
     _source_subfolder = "source_subfolder"
@@ -42,6 +44,7 @@ class ActorZetaConan(ConanFile):
             self._cmake.definitions["EXCEPTIONS_DISABLE"] = self.options.exceptions_disable
             self._cmake.definitions["RTTI_DISABLE"] = self.options.rtti_disable
             self._cmake.definitions["SHARED"] = self.options.shared
+            self._cmake.definitions["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
             self._cmake.configure(build_folder=self._build_subfolder)
         return self._cmake
 
