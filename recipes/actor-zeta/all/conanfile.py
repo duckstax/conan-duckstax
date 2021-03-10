@@ -4,8 +4,8 @@ import os
 
 class ActorZetaConan(ConanFile):
     name = "actor-zeta"
-    version = "1.0.0a4"
-    description = "actor-zeta is an open source C++11 virtual actor model implementation featuring lightweight & fast and more."
+    version = "1.0.0a5"
+    description = "actor-zeta is an open source C++ virtual actor model implementation featuring lightweight & fast and more."
     url = "https://github.com/cyberduckninja/actor-zeta"
     homepage = "https://github.com/cyberduckninja/actor-zeta"
     author = "kotbegemot <aa.borgardt@yandex.ru>"
@@ -58,9 +58,11 @@ class ActorZetaConan(ConanFile):
         cmake.build()
 
     def package(self):
+        include_folder = os.path.join(self._source_subfolder, "header/actor-zeta")
         self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
-        self.copy('*.hpp', dst='include/actor-zeta', src='%s/core/actor-zeta' % self._source_subfolder)
-        self.copy('*.ipp', dst='include/actor-zeta', src='%s/core/actor-zeta' % self._source_subfolder)
+        self.copy('*.hpp', dst='include/actor-zeta', src=include_folder)
+        self.copy('*.ipp', dst='include/actor-zeta', src=include_folder)
+        self.copy('*.hpp', dst='include/actor-zeta', src=os.path.join(self._source_subfolder, "header"))
         self.copy(pattern="*.dll", dst="bin", keep_path=False)
         self.copy(pattern="*.lib", dst="lib", keep_path=False)
         self.copy(pattern="*.a", dst="lib", keep_path=False)

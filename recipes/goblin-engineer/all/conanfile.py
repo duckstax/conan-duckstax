@@ -4,7 +4,7 @@ import os
 
 class GoblinEngineerConan(ConanFile):
     name = "goblin-engineer"
-    version = "1.0.0a3"
+    version = "1.0.0a4"
     description = "Keep it short"
     topics = ("conan", "libname", "logging")
     url = "https://github.com/cyberduckninja/goblin-engineer"
@@ -23,22 +23,24 @@ class GoblinEngineerConan(ConanFile):
         "boost_no_deprecated": [True, False],
         # "shared": [True, False],
         # "fPIC": [True, False],
-        "http_component": [True, False]
+        "http_component": [True, False],
+        "cxx_standard": [14, 17]
     }
 
     default_options = {
         "boost_no_deprecated": False,
         # "shared": False,
         # "fPIC": False,
-        "http_component": False
+        "http_component": False,
+        "cxx_standard": 14
     }
 
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
 
     requires = (
-        "boost/1.71.0@conan/stable",
-        "actor-zeta/1.0.0a4@cyberduckninja/stable"
+        "boost/1.75.0",
+        "actor-zeta/1.0.0a5@cyberduckninja/stable"
     )
 
     def config_options(self):
@@ -53,7 +55,11 @@ class GoblinEngineerConan(ConanFile):
 
         self.options["actor-zeta"].exceptions_disable = False
         self.options["actor-zeta"].rtti_disable = False
-        #if self.options.shared:
+
+        if self.options.cxx_standard == 17:
+            self.options["actor-zeta"].cxx_standard = self.options.cxx_standard
+
+        # if self.options.shared:
         #    self.options["actor-zeta"].SHARED = True
 
     def source(self):
@@ -64,7 +70,6 @@ class GoblinEngineerConan(ConanFile):
     def _configure_cmake(self):
         if not self._cmake:
             self._cmake = CMake(self)
-            self._cmake.definitions["HTTP_COMPONENT"] = self.options.http_component
             self._cmake.configure(source_dir=self._source_subfolder)
         return self._cmake
 
