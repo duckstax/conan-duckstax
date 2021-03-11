@@ -1,9 +1,9 @@
-#include <map>
-#include <vector>
-#include <iostream>
-
 #include <actor-zeta/actor-zeta.hpp>
 
+int main() {
+    return 0;
+}
+/*
 using actor_zeta::basic_async_actor;
 using actor_zeta::send;
 using actor_zeta::abstract_executor;
@@ -106,3 +106,4 @@ int main() {
     send(storage, actor_zeta::actor_address(), "status");
     return 0;
 }
+*/
