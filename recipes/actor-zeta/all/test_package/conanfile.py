@@ -8,6 +8,7 @@ class TestPackageConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
+        cmake.definitions["CMAKE_CXX_STANDARD"] = self.options["actor-zeta"].cxx_standard
         cmake.configure()
         cmake.build()
 
