@@ -21,16 +21,12 @@ class GoblinEngineerConan(ConanFile):
 
     options = {
         "boost_no_deprecated": [True, False],
-        # "shared": [True, False],
-        # "fPIC": [True, False],
         "http_component": [True, False],
         "cxx_standard": [14, 17]
     }
 
     default_options = {
         "boost_no_deprecated": False,
-        # "shared": False,
-        # "fPIC": False,
         "http_component": False,
         "cxx_standard": 14
     }
@@ -70,6 +66,7 @@ class GoblinEngineerConan(ConanFile):
     def _configure_cmake(self):
         if not self._cmake:
             self._cmake = CMake(self)
+            self._cmake.definitions["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
             self._cmake.configure(source_dir=self._source_subfolder)
         return self._cmake
 
