@@ -18,9 +18,10 @@ class ActorZetaConan(ConanFile):
     _cmake = None
 
     options = {
+        "shared": [True, False],
+        "fPIC": [True, False],
         "exceptions_disable": [True, False],
         "rtti_disable": [True, False],
-        "shared": [True, False],
         "cxx_standard": [11, 14, 17]
     }
 
@@ -28,6 +29,7 @@ class ActorZetaConan(ConanFile):
         "exceptions_disable": False,
         "rtti_disable": False,
         "shared": False,
+        "fPIC": False,
         "cxx_standard": 11
     }
 

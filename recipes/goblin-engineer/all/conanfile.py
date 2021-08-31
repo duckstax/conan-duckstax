@@ -20,6 +20,8 @@ class GoblinEngineerConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
 
     options = {
+        "shared": [True, False],
+        "fPIC": [True, False],
         "boost_no_deprecated": [True, False],
         "http_component": [True, False],
         "cxx_standard": [14, 17]
@@ -28,6 +30,8 @@ class GoblinEngineerConan(ConanFile):
     default_options = {
         "boost_no_deprecated": False,
         "http_component": False,
+        "shared": False,
+        "fPIC": False,
         "cxx_standard": 14
     }
 
