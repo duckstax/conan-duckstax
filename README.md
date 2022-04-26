@@ -2,18 +2,17 @@
 
 ## Conan Information
 
-cyberduckninja.com packages can be found in the following public Conan repository:
-
-[cyberduckninja.com Public Conan Repository on Bintray](https://bintray.com/cyberduckninja/conan)
-
-*Note: You can click the "Set Me Up" button on the Bintray page above for instructions on using packages from this repository.*
-
 # How To Use
+
+```commandline
+conan create . 1.0.0a4@duckstax/stable -o:cxx_standard=17 -o:fPIC=True
+conan upload goblin-engineer/1.0.0a4@duckstax/stable  -r duckstax --all
+```
 
 ## For Users
 
 Add the corresponding remote to your conan:
 
 ```bash
-conan remote add cyberduckninja  https://api.bintray.com/conan/cyberduckninja/conan
+conan remote add duckstax http://conan.duckstax.com:9300
 ```

@@ -101,19 +101,19 @@ class ProxyWASMCPPHost(ConanFile):
         self.copy('*.lib', dst='lib',
                   src='bazel-bin/external/com_github_bytecodealliance_wasm_micro_runtime/copy_wamr_lib',
                   keep_path=False)
-        self.copy('*.dll', dst='bin', 
+        self.copy('*.dll', dst='bin',
                   src='bazel-bin/external/com_github_bytecodealliance_wasm_micro_runtime/copy_wamr_lib',
                   keep_path=False)
-        self.copy('*.a', dst='lib', 
+        self.copy('*.a', dst='lib',
                   src='bazel-bin/external/com_github_bytecodealliance_wasm_micro_runtime/copy_wamr_lib',
                   keep_path=False)
-        self.copy('*.lo', dst='lib', 
+        self.copy('*.lo', dst='lib',
                   src='bazel-bin/external/com_github_bytecodealliance_wasm_micro_runtime/copy_wamr_lib',
                   keep_path=False)
-        self.copy('*.dylib', dst='lib', 
+        self.copy('*.dylib', dst='lib',
                   src='bazel-bin/external/com_github_bytecodealliance_wasm_micro_runtime/copy_wamr_lib',
                   keep_path=False)
-        self.copy('*.so', dst='lib', 
+        self.copy('*.so', dst='lib',
                   src='bazel-bin/external/com_github_bytecodealliance_wasm_micro_runtime/copy_wamr_lib',
                   keep_path=False)
 
