@@ -1,0 +1,25 @@
+FROM ubuntu:20.04
+
+RUN apt update && \
+    apt upgrade -y && \
+    apt install -y python3-pip git && \
+    rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/* && \
+    pip3 install --no-cache-dir --user conan
+
+ENV HOME="/root"
+ENV PATH="$PATH:$HOME/.local/bin"
+
+RUN conan profile new default --detect --force && \
+    conan profile update settings.compiler.libcxx=libstdc++11 default && \
+    conan profile new emscripten && \
+    conan profile update settings.compiler=clang emscripten && \
+    conan profile update settings.compiler.version=13 emscripten && \
+    conan profile update settings.compiler.libcxx=libc++ emscripten && \
+    conan profile update settings.arch=wasm emscripten && \
+    conan profile update settings.os=Emscripten emscripten && \
+    echo 'CFLAGS=-s STANDALONE_WASM\nCXXFLAGS=-s STANDALONE_WASM\nLDFLAGS=-s STANDALONE_WASM\n[tool_requires]\nemsdk/3.1.7' >> "${HOME}/.conan/profiles/emscripten"
+
+RUN git clone https://github.com/duckstax/conan-duckstax.git
+
+RUN cd conan-duckstax/recipes/quickjs/all && \
+    conan create . 2788d71e823b522b178db3b3660ce93689534e6d@duckstax/stable --profile:build=default --profile:host=emscripten
