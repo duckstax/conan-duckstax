@@ -13,11 +13,11 @@ RUN conan profile new default --detect --force && \
     conan profile update settings.compiler.libcxx=libstdc++11 default && \
     conan profile new emscripten && \
     conan profile update settings.compiler=clang emscripten && \
-    conan profile update settings.compiler.version=13 emscripten && \
+    conan profile update settings.compiler.version=15 emscripten && \
     conan profile update settings.compiler.libcxx=libc++ emscripten && \
     conan profile update settings.arch=wasm emscripten && \
     conan profile update settings.os=Emscripten emscripten && \
-    echo 'CFLAGS=-s STANDALONE_WASM\nCXXFLAGS=-s STANDALONE_WASM\nLDFLAGS=-s STANDALONE_WASM\n[tool_requires]\nemsdk/3.1.7' >> "${HOME}/.conan/profiles/emscripten"
+    echo 'CFLAGS=-s STRICT=1\nCXXFLAGS=-s STRICT=1\nLDFLAGS=-s STRICT=1 -s STANDALONE_WASM -s PURE_WASI=1 -s ABORTING_MALLOC=0\n[tool_requires]\nemsdk/3.1.7' >> "${HOME}/.conan/profiles/emscripten"
 
 RUN git clone https://github.com/duckstax/conan-duckstax.git
 
