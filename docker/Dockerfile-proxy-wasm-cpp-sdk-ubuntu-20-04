@@ -1,0 +1,29 @@
+FROM ubuntu:20.04
+
+RUN apt update && \
+    apt upgrade -y && \
+    apt install -y curl gnupg apt-transport-https && \
+    curl -fsSL https://bazel.build/bazel-release.pub.gpg | apt-key add && \
+    echo 'deb https://storage.googleapis.com/bazel-apt stable jdk1.8' | tee /etc/apt/sources.list.d/bazel.list && \
+    apt update && \
+    apt install -y bazel bazel-4.1.0 python3-pip git && \
+    rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/* && \
+    pip3 install --no-cache-dir --user conan
+
+ENV HOME="/root"
+ENV PATH="$PATH:$HOME/.local/bin"
+
+RUN conan profile new default --detect --force && \
+    conan profile update settings.compiler.libcxx=libstdc++11 default && \
+    conan profile new emscripten && \
+    conan profile update settings.compiler=clang emscripten && \
+    conan profile update settings.compiler.version=15 emscripten && \
+    conan profile update settings.compiler.libcxx=libc++ emscripten && \
+    conan profile update settings.arch=wasm emscripten && \
+    conan profile update settings.os=Emscripten emscripten && \
+    echo 'CFLAGS=-s STRICT=1\nCXXFLAGS=-s STRICT=1\nLDFLAGS=-s STRICT=1 -s STANDALONE_WASM -s PURE_WASI=1 -s ABORTING_MALLOC=0\n[tool_requires]\nemsdk/3.1.7' >> "${HOME}/.conan/profiles/emscripten"
+
+RUN git clone https://github.com/duckstax/conan-duckstax.git
+
+RUN cd conan-duckstax/recipes/proxy-wasm-cpp-sdk/all && \
+    conan create . c32d380ca6c9b1afac38a3841be99c37af2698bf@duckstax/stable --profile:build=default --profile:host=emscripten
