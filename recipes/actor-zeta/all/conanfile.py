@@ -4,7 +4,6 @@ import os
 
 class ActorZetaConan(ConanFile):
     name = "actor-zeta"
-    version = "1.0.0a5"
     description = "actor-zeta is an open source C++ virtual actor model implementation featuring lightweight & fast and more."
     url = "https://github.com/cyberduckninja/actor-zeta"
     homepage = "https://github.com/cyberduckninja/actor-zeta"
@@ -14,7 +13,6 @@ class ActorZetaConan(ConanFile):
     exports_sources = ["CMakeLists.txt"]
     generators = "cmake"
     settings = "os", "arch", "compiler", "build_type"
-    build_policy = "missing"
     _cmake = None
 
     options = {
@@ -62,6 +60,7 @@ class ActorZetaConan(ConanFile):
     def package(self):
         include_folder = os.path.join(self._source_subfolder, "header/actor-zeta")
         self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
+        self.copy('actor-zeta.hpp', dst='include', src= os.path.join(self._source_subfolder, "header"))
         self.copy('*.hpp', dst='include/actor-zeta', src=include_folder)
         self.copy('*.ipp', dst='include/actor-zeta', src=include_folder)
         self.copy('*.hpp', dst='include/actor-zeta', src=os.path.join(self._source_subfolder, "header"))
