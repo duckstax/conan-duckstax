@@ -4,7 +4,6 @@ import os
 
 class GoblinEngineerConan(ConanFile):
     name = "goblin-engineer"
-    version = "1.0.0a4"
     description = "Keep it short"
     topics = ("conan", "libname", "logging")
     url = "https://github.com/cyberduckninja/goblin-engineer"
@@ -14,7 +13,6 @@ class GoblinEngineerConan(ConanFile):
     exports = ["LICENSE.md"]
     exports_sources = ["CMakeLists.txt"]
     generators = "cmake"
-    build_policy = "missing"
     _cmake = None
 
     settings = "os", "arch", "compiler", "build_type"

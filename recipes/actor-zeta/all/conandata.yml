@@ -2,3 +2,11 @@ sources:
   "1.0.0a5":
     url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a5.tar.gz"
     sha256: "19a417884a5fbec0f475924dd27d38407f32698385da40e631a059749797e91d"
+
+  "1.0.0a6":
+    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a6.tar.gz"
+    sha256: "cf6bd4d4bc083367d08fb6db1657479e7c34da7e82ddad2ceaae1876d20cac17"
+
+  "1.0.0a7":
+    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a7.tar.gz"
+    sha256: "ba80f4a8f89872c444bc0cad8143ea0a9d441faef4af791dc860ae8d534ae1c5"
