@@ -41,7 +41,7 @@ jobs:
       - name: update-remote
         #if: ${{ github.ref_name == 'master' }}
         run: |
-          conan user ${CONAN_LOGIN_USERNAME} -r duckstax  -p ${CONAN_PASSWORD}
+          conan user ${{ CONAN_LOGIN_USERNAME }} -r duckstax  -p ${{ CONAN_PASSWORD }}
           chmod 777 update-remote.sh
           conan upload "*"  -r duckstax --all
           #./update-remote.sh
