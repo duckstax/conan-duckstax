@@ -38,6 +38,7 @@ jobs:
           chmod 777 recipes-create.sh
           ./recipes-create.sh
 
+        if: ${{ github.ref_name == 'master' }}
       - name: update-remote
         run: |
           chmod 777 update-remote.sh
