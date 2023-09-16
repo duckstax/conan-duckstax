@@ -105,6 +105,6 @@ else
 
         echo -e "\033[32m Created packages: \033[0m"
         #conan list "*"  # conan 2.0
-        check-result
+        #check-result
         echo -e "\033[32m Script finished. \033[0m"
 fi
