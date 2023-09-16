@@ -38,8 +38,8 @@ jobs:
           chmod 777 recipes-create.sh
           ./recipes-create.sh
 
-        if: ${{ github.ref_name == 'master' }}
       - name: update-remote
+        if: ${{ github.ref_name == 'master' }}
         run: |
           chmod 777 update-remote.sh
           conan remote login -p ${AUTH_PASS} duckstax ${AUTH_LOGIN}
