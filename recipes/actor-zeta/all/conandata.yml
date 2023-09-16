@@ -10,3 +10,13 @@ sources:
   "1.0.0a7":
     url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a7.tar.gz"
     sha256: "ba80f4a8f89872c444bc0cad8143ea0a9d441faef4af791dc860ae8d534ae1c5"
+
+  "1.0.0a8":
+    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a8.tar.gz"
+    sha256: "6f3d2db94c8a050e29e32fec7b0801494442df44002206be6c2b510331489ff1"
+
+patches:
+  "1.0.0a8":
+    - patch_file: "patches/cmakelist_1_0_0a8_update.patch"
+      patch_description: "Update CMakeList.txt for building 1.0.0a8 ver"
+      patch_type: "conan"
