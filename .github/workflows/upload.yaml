@@ -35,6 +35,7 @@ jobs:
 
       - name: recipes-create
         run: |
+          chmod 777 recipes-create.sh
           ./recipes-create.sh
 
       - name: update-remote
