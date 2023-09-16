@@ -43,4 +43,5 @@ jobs:
         run: |
           conan remote login -p ${CONAN_LOGIN_USERNAME} duckstax ${CONAN_PASSWORD}
           chmod 777 update-remote.sh
-          ./update-remote.sh
+          conan upload "*"  -r duckstax --all
+          #./update-remote.sh
