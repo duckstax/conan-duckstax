@@ -3,7 +3,7 @@
 # -- variables --
 value_to_compare="phbc"
 tmp_file=".create_result_tmp"
-conan_remote="conan_streamlabs_20"
+conan_remote="duckstax"
 
 # -- functions --
 
