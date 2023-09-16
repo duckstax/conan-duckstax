@@ -2,7 +2,7 @@
 
 # -- variables --
 
-conan_remote="conan_streamlabs_20"
+conan_remote="duckstax"
 result="result.txt"
 tmp="tmp.txt"
 file="req-seq.txt"
