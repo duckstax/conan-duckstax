@@ -6,9 +6,9 @@ jobs:
     strategy:
       matrix:
         configuration: [
-          {"UBUNTU_VERSION":"18.04"},
+         # {"UBUNTU_VERSION":"18.04"},
           {"UBUNTU_VERSION":"20.04"},
-          {"UBUNTU_VERSION":"22.04"},
+        #  {"UBUNTU_VERSION":"22.04"},
         ]
 
     runs-on: ubuntu-latest
