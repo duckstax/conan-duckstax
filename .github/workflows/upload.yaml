@@ -19,16 +19,18 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install system dependencies
-        env:
-          DEBIAN_FRONTEND: noninteractive
         run: |
-          apt update && apt-get install -y \
-            software-properties-common ca-certificates \
-            ninja-build make \
-            zlib1g-dev wget
+          sudo apt update && sudo apt install -y  build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
 
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --no-cache-dir conan==1.60 cmake
+      - name: conan installation and configuration
+        run: |
+          pip install conan==1.60.0 pytest==6.2.5
+          conan user
+          conan profile new default --detect --force
+          conan profile update settings.compiler.libcxx=libstdc++11 default
+          conan config set general.parallel_download=$(nproc)
+          conan config set general.cpu_count=$(nproc)
+          conan remote add duckstax http://conan.duckstax.com
 
       - name: recipes-create
         run: |
