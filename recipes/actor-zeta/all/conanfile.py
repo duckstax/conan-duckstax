@@ -1,4 +1,6 @@
 from conans import ConanFile, CMake, tools
+from conan.tools.files import (
+    apply_conandata_patches, export_conandata_patches)
 import os
 
 
@@ -10,7 +12,7 @@ class ActorZetaConan(ConanFile):
     author = "kotbegemot <aa.borgardt@yandex.ru>"
     license = "MIT"
     exports = ["LICENSE.md"]
-    exports_sources = ["CMakeLists.txt"]
+    # exports_sources = ["CMakeLists.txt"]
     generators = "cmake"
     settings = "os", "arch", "compiler", "build_type"
     _cmake = None
@@ -34,6 +36,10 @@ class ActorZetaConan(ConanFile):
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
 
+    def export_sources(self):
+        self.copy("CMakeLists.txt")
+        export_conandata_patches(self)
+
     def config_options(self):
         if self.settings.os == 'Windows':
             del self.options.fPIC
@@ -52,6 +58,7 @@ class ActorZetaConan(ConanFile):
         tools.get(**self.conan_data["sources"][self.version])
         extracted_dir = self.name + "-" + self.version
         os.rename(extracted_dir, self._source_subfolder)
+        apply_conandata_patches(self)
 
     def build(self):
         cmake = self._configure_cmake()
