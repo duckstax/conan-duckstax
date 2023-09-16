@@ -25,7 +25,7 @@ jobs:
 
       - name: conan installation and configuration
         run: |
-          pip install conan==1.60.0 pytest==6.2.5
+          pip install conan==1.60.0 cmake
           conan user
           conan profile new default --detect --force
           conan profile update settings.compiler.libcxx=libstdc++11 default
@@ -40,4 +40,6 @@ jobs:
 
       - name: update-remote
         run: |
+          chmod 777 update-remote.sh
+          conan remote login -p ${AUTH_PASS} duckstax ${AUTH_LOGIN}
           ./update-remote.sh
