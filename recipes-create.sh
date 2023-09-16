@@ -47,7 +47,7 @@ function create-package() {
             package_name=${lib%$delimeter*}
             package_version=${lib#*$delimeter}
             #conan create recipes/"$package_name"/*/ --name $package_name --version $package_version # conan 2.0
-            conan create recipes/"$package_name"/*/ lib
+            conan create recipes/"$package_name"/*/ lib "${lib}@duckstax/stable"
     fi
 }
 
