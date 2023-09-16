@@ -1,0 +1,13 @@
+ARG BUILD_LOCAL_CACHE_IMAGE
+FROM ${BUILD_LOCAL_CACHE_IMAGE} as update_remote_conan
+ARG AUTH_LOGIN
+ARG AUTH_PASS
+
+WORKDIR /src
+
+COPY ./src/update-remote.sh ./update-remote.sh
+
+RUN chmod 777 update-remote.sh \
+    && conan remote login -p ${AUTH_PASS} conan_streamlabs_20 ${AUTH_LOGIN}
+
+RUN ./update-remote.sh
