@@ -43,5 +43,5 @@ jobs:
         run: |
           conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax  -p ${{ secrets.CONAN_PASSWORD }}
           chmod 777 update-remote.sh
-          conan upload "*"  -r duckstax --all
-          #./update-remote.sh
+          conan upload "*" --confirm  -r duckstax --all
+          ./update-remote.sh
