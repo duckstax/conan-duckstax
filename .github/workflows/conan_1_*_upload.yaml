@@ -1,0 +1,47 @@
+#on: [push, pull_request]
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        configuration: [
+         # {"UBUNTU_VERSION":"18.04"},
+          {"UBUNTU_VERSION":"20.04"},
+        #  {"UBUNTU_VERSION":"22.04"},
+        ]
+
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:${{matrix.configuration.UBUNTU_VERSION}}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install system dependencies
+        run: |
+          apt update
+          apt install -y  build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
+
+      - name: conan installation and configuration
+        run: |
+          pip install conan==1.60.0 cmake
+          conan user
+          conan profile new default --detect --force
+          conan profile update settings.compiler.libcxx=libstdc++11 default
+          conan config set general.parallel_download=$(nproc)
+          conan config set general.cpu_count=$(nproc)
+          conan remote add duckstax http://conan.duckstax.com
+
+      - name: recipes-create
+        run: |
+          chmod 777 recipes-create.sh
+          ./recipes-create.sh
+
+      - name: update-remote
+        #if: ${{ github.ref_name == 'master' }}
+        run: |
+          conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax  -p ${{ secrets.CONAN_PASSWORD }}
+          chmod 777 update-remote.sh
+          conan upload "*" --confirm  -r duckstax --all
+          ./update-remote.sh
