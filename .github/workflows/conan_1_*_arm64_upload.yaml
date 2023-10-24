@@ -30,7 +30,6 @@ jobs:
               apt update
               apt install -y  build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
 
-
               pip install conan==1.60.0 cmake
               conan user
               conan profile new default --detect --force
@@ -47,3 +46,7 @@ jobs:
               chmod 777 update-remote.sh
               conan upload "*" --confirm  -r duckstax --all
               ./update-remote.sh
+              conan install boost/1.80.0 spdlog/1.12.0 pybind11/2.10.0 msgpack-cxx/4.1.1 date/3.0.1 --build missing -s build_type=Release
+              conan install catch2/2.13.7 crc32c/1.1.2 abseil/20211102.0 --build missing -s build_type=Release
+              conan install rocksdb/6.20.3 benchmark/1.6.1 zlib/1.2.12 --build missing -s build_type=Release
+              conan install bzip2/1.0.8 magic_enum/0.8.1  --build missing -s build_type=Release
