@@ -59,4 +59,4 @@ jobs:
               conan install zlib/1.2.12@_/_ --build missing -s build_type=Release
               conan install bzip2/1.0.8@_/_ --build missing -s build_type=Release
               conan install magic_enum/0.8.1@_/_  --build missing -s build_type=Release
-              conan upload "*" --confirm  -r duckstax --all
+              conan upload */*@duckstax/stable --confirm  -r duckstax --all
