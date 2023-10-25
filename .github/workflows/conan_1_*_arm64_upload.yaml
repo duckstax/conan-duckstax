@@ -47,9 +47,9 @@ jobs:
               ./update-remote.sh
 
               #conan install boost/1.80.0@_/_ --build missing -s build_type=Release
-              conan install spdlog/1.12.0@_/_ --build missing -s build_type=Release
-              #conan install pybind11/2.10.0@_/_ --build missing -s build_type=Release
-              #conan install msgpack-cxx/4.1.1@_/_ --build missing -s build_type=Release
+              #conan install spdlog/1.12.0@_/_ --build missing -s build_type=Release
+              conan install pybind11/2.10.0@_/_ --build missing -s build_type=Release
+              conan install msgpack-cxx/4.1.1@_/_ --build missing -s build_type=Release
               #conan install date/3.0.1@_/_ --build missing -s build_type=Release
               #conan install catch2/2.13.7@_/_ --build missing -s build_type=Release
               #conan install crc32c/1.1.2@_/_ --build missing -s build_type=Release
