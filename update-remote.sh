@@ -26,4 +26,4 @@ conan_remote="duckstax"
 # fi
 
 echo -e "\033[32m remote conan server $conan_remote would be updated \033[0m"
-conan upload "*" --confirm -r $conan_remote
+conan upload "*" --force --confirm -r $conan_remote
