@@ -1,0 +1,63 @@
+name: ubuntu 20.04 arm64
+
+on: [push]
+
+jobs:
+  build_job:
+    # The host should always be linux
+    runs-on: ubuntu-22.04
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            distro: ubuntu20.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: uraimo/run-on-arch-action@v2
+        name: Build artifact
+        id: build
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+
+          # Not required, but speeds up builds
+          githubToken: ${{ github.token }}
+
+          run: |
+              apt update
+              apt install -y  build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
+
+              pip install conan==1.60.0 cmake
+              conan user
+              conan profile new default --detect --force
+              conan profile update settings.compiler.libcxx=libstdc++11 default
+              conan profile update settings.build_type=Release default 
+              conan config set general.parallel_download=$(nproc)
+              conan config set general.cpu_count=$(nproc)
+              conan remote add duckstax http://conan.duckstax.com --insert 0
+
+              chmod 777 recipes-create.sh
+              ./recipes-create.sh
+
+
+              conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax  -p ${{ secrets.CONAN_PASSWORD }}
+              chmod 777 update-remote.sh
+              ./update-remote.sh
+
+              #conan install boost/1.80.0@_/_ --build missing -s build_type=Release
+              #conan install spdlog/1.12.0@_/_ --build missing -s build_type=Release
+              #conan install pybind11/2.10.0@_/_ --build missing -s build_type=Release
+              #conan install msgpack-cxx/4.1.1@_/_ --build missing -s build_type=Release
+              #conan install date/3.0.1@_/_ --build missing -s build_type=Release
+              #conan install catch2/2.13.7@_/_ --build missing -s build_type=Release
+              #conan install crc32c/1.1.2@_/_ --build missing -s build_type=Release
+              #conan install abseil/20211102.0@_/_ --build missing -s build_type=Release
+              #conan install rocksdb/6.20.3@_/_ --build missing -s build_type=Release
+              #conan install benchmark/1.6.1@_/_ --build missing -s build_type=Release
+              #conan install zlib/1.2.12@_/_ --build missing -s build_type=Release
+              #conan install bzip2/1.0.8@_/_ --build missing -s build_type=Release
+              #conan install magic_enum/0.8.1@_/_  --build missing -s build_type=Release
+              #conan upload */*@duckstax/stable --confirm  -r duckstax --all
