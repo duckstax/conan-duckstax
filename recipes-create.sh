@@ -41,7 +41,6 @@ function create-package() {
     then
         echo " empty package_name/version was passed "
         return
-    else
         #     lib=$1
         #     delimeter="/"
         #     package_name=${lib%$delimeter*}
@@ -68,7 +67,7 @@ function create-package() {
                     conan create recipes/"$package_name"/*/ "$lib@"
             fi
 
-            
+
     fi
 }
 
