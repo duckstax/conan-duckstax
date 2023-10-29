@@ -34,9 +34,10 @@ jobs:
               conan user
               conan profile new default --detect --force
               conan profile update settings.compiler.libcxx=libstdc++11 default
+              conan profile update settings.build_type=Release default 
               conan config set general.parallel_download=$(nproc)
               conan config set general.cpu_count=$(nproc)
-              conan remote add duckstax http://conan.duckstax.com
+              conan remote add duckstax http://conan.duckstax.com --insert 0
 
               chmod 777 recipes-create.sh
               ./recipes-create.sh
@@ -55,8 +56,8 @@ jobs:
               #conan install crc32c/1.1.2@_/_ --build missing -s build_type=Release
               #conan install abseil/20211102.0@_/_ --build missing -s build_type=Release
               #conan install rocksdb/6.20.3@_/_ --build missing -s build_type=Release
-              conan install benchmark/1.6.1@_/_ --build missing -s build_type=Release
-              conan install zlib/1.2.12@_/_ --build missing -s build_type=Release
-              conan install bzip2/1.0.8@_/_ --build missing -s build_type=Release
-              conan install magic_enum/0.8.1@_/_  --build missing -s build_type=Release
-              conan upload */*@duckstax/stable --confirm  -r duckstax --all
+              #conan install benchmark/1.6.1@_/_ --build missing -s build_type=Release
+              #conan install zlib/1.2.12@_/_ --build missing -s build_type=Release
+              #conan install bzip2/1.0.8@_/_ --build missing -s build_type=Release
+              #conan install magic_enum/0.8.1@_/_  --build missing -s build_type=Release
+              #conan upload */*@duckstax/stable --confirm  -r duckstax --all
