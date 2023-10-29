@@ -42,11 +42,33 @@ function create-package() {
         echo " empty package_name/version was passed "
         return
     else
+        #     lib=$1
+        #     delimeter="/"
+        #     package_name=${lib%$delimeter*}
+        #     package_version=${lib#*$delimeter}
+        #     conan create recipes/"$package_name"/*/  "$lib/$package_version@"
+
+
+        else
             lib=$1
             delimeter="/"
             package_name=${lib%$delimeter*}
             package_version=${lib#*$delimeter}
-            conan create recipes/"$package_name"/*/  "$lib/$package_version@"
+            symbol=${package_version:0:1}
+            all_dir="all"
+            current_dir="recipes/$package_name"
+
+            if [[ -d "$current_dir$delimeter$all_dir" ]]
+            then
+                    conan create "$current_dir$delimeter$all_dir"/ "$lib@"
+            elif [[ -d "$current_dir$delimeter$symbol.x.x" ]]
+            then
+                    conan create "$current_dir$delimeter$symbol.x.x"/ "$lib@"
+            else
+                    conan create recipes/"$package_name"/*/ "$lib@"
+            fi
+
+            
     fi
 }
 
@@ -97,7 +119,7 @@ then
 else
         echo -e "\033[32m Packages would be uploaded: \033[0m"
         cat $result
-        echo -e "\033[32m --------------------------- \033[0m"
+        echo -e "\033[32m /n --------------------------- \033[0m"
 
         for dir in $(cat $result)
         do
