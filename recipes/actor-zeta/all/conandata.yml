@@ -24,3 +24,8 @@ patches:
     - patch_file: "patches/cmakelist_1_0_0a8_update.patch"
       patch_description: "Update CMakeList.txt for building 1.0.0a8 ver"
       patch_type: "conan"
+
+  "1.0.0a9":
+    - patch_file: "patches/cmakelist_1_0_0a9_update.patch"
+      patch_description: "Update CMakeList.txt for building 1.0.0a9 ver"
+      patch_type: "conan"
