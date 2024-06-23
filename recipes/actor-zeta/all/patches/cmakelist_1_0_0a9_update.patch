@@ -3,9 +3,9 @@ index 0806641..e3cfd31 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -191,6 +191,9 @@ endif ()
-
+ 
  message(STATUS "CONAN_SETTINGS: ${CONAN_SETTINGS}")
-
+ 
 +if(CONAN_EXPORTED)
 +    conan_basic_setup(TARGETS)
 +else()
