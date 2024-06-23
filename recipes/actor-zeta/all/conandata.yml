@@ -16,8 +16,8 @@ sources:
     sha256: "6f3d2db94c8a050e29e32fec7b0801494442df44002206be6c2b510331489ff1"
 
   "1.0.0a9":
-    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a8.tar.gz"
-    sha256: "6f3d2db94c8a050e29e32fec7b0801494442df44002206be6c2b510331489ff1"
+    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a9.tar.gz"
+    sha256: "342ddcc2f59d849bbc62d694ea98915c68da33f3"
 
 patches:
   "1.0.0a8":
