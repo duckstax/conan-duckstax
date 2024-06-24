@@ -25,7 +25,7 @@ jobs:
 
       - name: conan installation and configuration
         run: |
-          pip install conan==1.60.0 cmake
+          pip install conan==1.64.1 cmake
           conan user
           conan profile new default --detect --force
           conan profile update settings.compiler.libcxx=libstdc++11 default

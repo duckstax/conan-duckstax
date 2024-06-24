@@ -1,22 +1,31 @@
 sources:
   "1.0.0a5":
-    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a5.tar.gz"
+    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a5.tar.gz"
     sha256: "19a417884a5fbec0f475924dd27d38407f32698385da40e631a059749797e91d"
 
   "1.0.0a6":
-    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a6.tar.gz"
+    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a6.tar.gz"
     sha256: "cf6bd4d4bc083367d08fb6db1657479e7c34da7e82ddad2ceaae1876d20cac17"
 
   "1.0.0a7":
-    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a7.tar.gz"
+    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a7.tar.gz"
     sha256: "ba80f4a8f89872c444bc0cad8143ea0a9d441faef4af791dc860ae8d534ae1c5"
 
   "1.0.0a8":
-    url: "https://github.com/cyberduckninja/actor-zeta/archive/1.0.0a8.tar.gz"
+    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a8.tar.gz"
     sha256: "6f3d2db94c8a050e29e32fec7b0801494442df44002206be6c2b510331489ff1"
+
+  "1.0.0a9":
+    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a9.tar.gz"
+    sha256: "817f0aa8416d3f1e6051167643cdcc3bf8bcc0f9e53c4185c7f6f7b9e228df56"
 
 patches:
   "1.0.0a8":
     - patch_file: "patches/cmakelist_1_0_0a8_update.patch"
       patch_description: "Update CMakeList.txt for building 1.0.0a8 ver"
+      patch_type: "conan"
+
+  "1.0.0a9":
+    - patch_file: "patches/cmakelist_1_0_0a9_update.patch"
+      patch_description: "Update CMakeList.txt for building 1.0.0a9 ver"
       patch_type: "conan"

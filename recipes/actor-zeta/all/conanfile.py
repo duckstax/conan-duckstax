@@ -8,7 +8,7 @@ class ActorZetaConan(ConanFile):
     name = "actor-zeta"
     description = "actor-zeta is an open source C++ virtual actor model implementation featuring lightweight & fast and more."
     url = "https://github.com/duckstax/actor-zeta"
-    homepage = "https://github.com/cyberduckninja/actor-zeta"
+    homepage = "https://github.com/duckstax/actor-zeta"
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
     exports = ["LICENSE.md"]
