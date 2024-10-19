@@ -70,7 +70,7 @@ class ActorZetaConan(ConanFile):
         self.copy('actor-zeta.hpp', dst='include', src= os.path.join(self._source_subfolder, "header"))
         self.copy('*.hpp', dst='include/actor-zeta', src=include_folder)
         self.copy('*.ipp', dst='include/actor-zeta', src=include_folder)
-        self.copy('*.hpp', dst='include/actor-zeta', src=os.path.join(self._source_subfolder, "header"))
+        #self.copy('*.hpp', dst='include/actor-zeta', src=os.path.join(self._source_subfolder, "header"))
         self.copy(pattern="*.dll", dst="bin", keep_path=False)
         self.copy(pattern="*.lib", dst="lib", keep_path=False)
         self.copy(pattern="*.a", dst="lib", keep_path=False)
