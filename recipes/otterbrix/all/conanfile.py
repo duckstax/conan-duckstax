@@ -1,4 +1,5 @@
 from conans import ConanFile, CMake, tools
+import os
 
 
 class Otterbrix(ConanFile):
@@ -43,21 +44,13 @@ class Otterbrix(ConanFile):
         cmake = CMake(self)
         self.output.info(f"Source folder: {self.source_folder}")
         self.output.info(f"Build folder: {self.build_folder}")
-        if not tools.os.path_exists(os.path.join(self.source_folder, "CMakeLists.txt")):
+
+        if not os.path.exists(os.path.join(self.source_folder, "CMakeLists.txt")):
             raise Exception(f"CMakeLists.txt not found in {self.source_folder}")
 
-        cmake.configure(source_dir=self.source_folder)
-        cmake.build()
-
-        # 2: tools.chdir
-        # with tools.chdir(self.source_folder):
-        #     cmake.configure()
-        #     cmake.build()
-
-        # 3:
-        # with tools.chdir(self.source_folder):
-        #     self.run('cmake . -DCMAKE_BUILD_TYPE={0}'.format(self.settings.build_type))
-        #     self.run('cmake --build .')
+        with tools.chdir(self.source_folder):
+            cmake.configure()
+            cmake.build()
 
     def package(self):
         self.copy("*.hpp", dst="include/otterbrix", src="integration/cpp")
