@@ -1,5 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
+import os
+
 
 class Otterbrix(ConanFile):
     name = "otterbrix"
@@ -30,6 +32,28 @@ class Otterbrix(ConanFile):
     def layout(self):
         cmake_layout(self)
 
+        # Распечатаем содержимое текущей директории
+        self.output.info("Содержимое текущей директории:")
+        current_dir = os.getcwd()
+        self.output.info(f"Текущая директория: {current_dir}")
+
+        # Печать всех файлов в текущей директории и поддиректориях
+        for root, dirs, files in os.walk(current_dir):
+            rel_path = os.path.relpath(root, current_dir)
+            if rel_path == ".":
+                self.output.info(f"Файлы в корневой директории:")
+            else:
+                self.output.info(f"Файлы в директории {rel_path}:")
+
+            for file in files:
+                self.output.info(f"  - {file}")
+
+            self.output.info("Поддиректории:")
+            for dir in dirs:
+                self.output.info(f"  - {dir}")
+
+            self.output.info("-" * 50)
+
     def requirements(self):
         self.requires("boost/1.86.0@")
         self.requires("fmt/10.2.1@")
@@ -46,6 +70,24 @@ class Otterbrix(ConanFile):
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
     def build(self):
+        # Дополнительно распечатаем содержимое на этапе сборки
+        self.output.info("Содержимое директории на этапе сборки:")
+        build_dir = os.getcwd()
+        self.output.info(f"Директория сборки: {build_dir}")
+
+        for item in os.listdir(build_dir):
+            self.output.info(f"  - {item}")
+
+        # Проверим наличие CMakeLists.txt
+        if not os.path.exists("CMakeLists.txt"):
+            self.output.error("CMakeLists.txt не найден в текущей директории!")
+            self.output.info("Пытаемся найти CMakeLists.txt...")
+
+            for root, dirs, files in os.walk(build_dir):
+                if "CMakeLists.txt" in files:
+                    self.output.info(f"CMakeLists.txt найден в: {os.path.relpath(root, build_dir)}")
+
+        # Продолжаем стандартную сборку
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
@@ -56,9 +98,9 @@ class Otterbrix(ConanFile):
         self.copy("*.hpp", dst="include", src=".")
         self.copy("*.h", dst="include", src=".")
         self.copy("*.dll", dst="bin", keep_path=False)  # Windows shared library
-        self.copy("*.so", dst="lib", keep_path=False)   # Linux shared library
-        self.copy("*.dylib", dst="lib", keep_path=False) # macOS shared library
-        self.copy("*.a", dst="lib", keep_path=False)    # Static library (if needed)
+        self.copy("*.so", dst="lib", keep_path=False)  # Linux shared library
+        self.copy("*.dylib", dst="lib", keep_path=False)  # macOS shared library
+        self.copy("*.a", dst="lib", keep_path=False)  # Static library (if needed)
 
     def package_info(self):
         self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
