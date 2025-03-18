@@ -12,6 +12,7 @@ USER="duckstax"
 CHANNEL="stable"
 UPLOAD_PACKAGES=true  # By default, packages are uploaded
 BUILD_PROFILE="default"  # Default build profile
+DEBUG_MODE=false  # Debug mode flag
 
 # Command line arguments processing
 for arg in "$@"; do
@@ -24,11 +25,16 @@ for arg in "$@"; do
             BUILD_PROFILE="${arg#*=}"
             shift
             ;;
+        --debug)
+            DEBUG_MODE=true
+            shift
+            ;;
         --help)
             echo "Usage: $0 [options]"
             echo "Options:"
             echo "  --no-upload       Create packages only without uploading to remote"
             echo "  --profile=NAME    Specify build profile (default: default)"
+            echo "  --debug           Enable debug mode with verbose output"
             echo "  --help            Show this help message"
             exit 0
             ;;
@@ -42,6 +48,7 @@ done
 GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[33m"
+BLUE="\033[34m"
 RESET="\033[0m"
 
 # -- functions --
@@ -52,7 +59,29 @@ log() {
     local message="$2"
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
-    echo -e "[$timestamp] [$level] $message" | tee -a "$LOG_FILE"
+    # Цветовая схема для разных уровней логирования
+    local color=""
+    case $level in
+        "INFO")
+            color=$GREEN
+            ;;
+        "ERROR")
+            color=$RED
+            ;;
+        "WARNING")
+            color=$YELLOW
+            ;;
+        "DEBUG")
+            color=$BLUE
+            # В обычном режиме не выводим отладочные сообщения
+            if [ "$DEBUG_MODE" != "true" ]; then
+                echo -e "[$timestamp] [$level] $message" >> "$LOG_FILE"
+                return
+            fi
+            ;;
+    esac
+
+    echo -e "[$timestamp] ${color}[$level]${RESET} $message" | tee -a "$LOG_FILE"
 }
 
 # Check if Conan is installed
@@ -75,6 +104,14 @@ check_conan() {
         fi
     else
         log "INFO" "Using Conan version $version"
+    fi
+
+    # Debug: Показать профили Conan
+    if [ "$DEBUG_MODE" = "true" ]; then
+        log "DEBUG" "Available Conan profiles:"
+        conan profile list
+        log "DEBUG" "Content of $BUILD_PROFILE profile:"
+        conan profile show $BUILD_PROFILE 2>/dev/null || log "DEBUG" "Profile $BUILD_PROFILE not found"
     fi
 }
 
@@ -148,6 +185,62 @@ prepare_result_file() {
     log "INFO" "Found $count packages to process"
 }
 
+# Check for toolchain files in conan build directories
+check_toolchain_files() {
+    local package_name=$1
+    local package_version=$2
+    local stage=$3  # "before" or "after"
+
+    log "DEBUG" "Checking for toolchain files $stage build for $package_name/$package_version"
+
+    # Возможные пути к директории сборки
+    local build_dirs=(
+        "$HOME/.conan/data/$package_name/$package_version/$USER/$CHANNEL/build"
+        "/github/home/.conan/data/$package_name/$package_version/$USER/$CHANNEL/build"
+        ".conan/data/$package_name/$package_version/$USER/$CHANNEL/build"
+    )
+
+    for dir in "${build_dirs[@]}"; do
+        if [ -d "$dir" ]; then
+            log "DEBUG" "Found build directory: $dir"
+
+            # Найти все папки с билдами
+            find "$dir" -type d | while read -r build_dir; do
+                # Проверить toolchain файлы
+                local toolchain_files=$(find "$build_dir" -name "conan_toolchain.cmake" 2>/dev/null)
+                if [ -n "$toolchain_files" ]; then
+                    echo "$toolchain_files" | while read -r toolchain; do
+                        log "DEBUG" "Found toolchain file: $toolchain"
+
+                        # Проверить содержимое toolchain файла
+                        log "DEBUG" "Toolchain file content (first 15 lines):"
+                        head -n 15 "$toolchain" | while read -r line; do
+                            log "DEBUG" "  $line"
+                        done
+
+                        log "DEBUG" "Checking critical settings in toolchain:"
+                        grep -i "CMAKE_CXX_COMPILER" "$toolchain" | log "DEBUG"
+                        grep -i "CMAKE_C_COMPILER" "$toolchain" | log "DEBUG"
+                        grep -i "CMAKE_BUILD_TYPE" "$toolchain" | log "DEBUG"
+                    done
+                else
+                    log "DEBUG" "No toolchain files found in $build_dir"
+                fi
+
+                # Проверить CMake логи
+                local cmake_error_log=$(find "$build_dir" -name "CMakeError.log" 2>/dev/null | head -n 1)
+                if [ -n "$cmake_error_log" ]; then
+                    log "DEBUG" "Found CMake error log: $cmake_error_log"
+                    log "DEBUG" "CMake error log content (last 30 lines):"
+                    tail -n 30 "$cmake_error_log" | while read -r line; do
+                        log "DEBUG" "  $line"
+                    done
+                fi
+            done
+        fi
+    done
+}
+
 # Create package
 create_package() {
     local package="$1"
@@ -169,12 +262,50 @@ create_package() {
         return 1
     fi
 
+    # Проверка toolchain файлов до сборки
+    if [ "$DEBUG_MODE" = "true" ]; then
+        check_toolchain_files "$package_name" "$package_version" "before"
+    fi
+
+    # Создаем временный файл для вывода ошибок
+    local error_output=$(mktemp)
+
+    # Установка переменных окружения для отладки
+    local env_vars=""
+    if [ "$DEBUG_MODE" = "true" ]; then
+        env_vars="CONAN_LOGGING_LEVEL=debug CONAN_CMAKE_VERBOSE_MAKEFILE=1"
+        log "DEBUG" "Using debug environment variables: $env_vars"
+    fi
+
     # Create package with specified build profile
-    if conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE; then
+    if eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE > >(tee -a "$LOG_FILE") 2> >(tee "$error_output" >&2); then
         log "SUCCESS" "Package $package_ref successfully created"
+        rm -f "$error_output"
         return 0
     else
+        local error_msg=$(cat "$error_output")
         log "ERROR" "Failed to create package $package_ref"
+        log "ERROR" "Error output: $error_msg"
+
+        # Проверка для конкретного пакета otterbrix
+        if [[ "$package_name" == "otterbrix" ]]; then
+            log "DEBUG" "Special debugging for otterbrix package"
+            # Проверка conanfile.py
+            local conanfile="recipes/$package_name/*/conanfile.py"
+            if [ -f "$conanfile" ]; then
+                log "DEBUG" "Checking conanfile.py for otterbrix:"
+                grep -n "cmake\.configure" "$conanfile" | log "DEBUG"
+                grep -n "self\.cpp_info" "$conanfile" | log "DEBUG"
+                grep -n "cmake\.definitions" "$conanfile" | log "DEBUG"
+            fi
+        fi
+
+        # Проверка toolchain файлов после неудачной сборки
+        if [ "$DEBUG_MODE" = "true" ]; then
+            check_toolchain_files "$package_name" "$package_version" "after"
+        fi
+
+        rm -f "$error_output"
         return 1
     fi
 }
@@ -256,6 +387,10 @@ main() {
     echo -e "${GREEN}=== Conan Package Creation and Upload ===${RESET}"
     echo "Execution started: $(date)" > "$LOG_FILE"
     echo -e "${YELLOW}Using build profile: $BUILD_PROFILE${RESET}"
+
+    if [ "$DEBUG_MODE" = "true" ]; then
+        echo -e "${BLUE}Debug mode enabled - verbose output will be shown${RESET}"
+    fi
 
     # Environment checks
     check_conan
