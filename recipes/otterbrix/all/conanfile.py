@@ -25,34 +25,55 @@ class Otterbrix(ConanFile):
         "actor-zeta:rtti_disable": False,
     }
 
+    def list_all_files(self, directory):
+        """Показывает все файлы и директории рекурсивно"""
+        self.output.info(f"Директория: {directory}")
+
+        try:
+            # Получаем списки файлов и директорий
+            items = os.listdir(directory)
+
+            files = [f for f in items if os.path.isfile(os.path.join(directory, f))]
+            dirs = [d for d in items if os.path.isdir(os.path.join(directory, d))]
+
+            # Печатаем файлы
+            if files:
+                self.output.info("  Файлы:")
+                for file in sorted(files):
+                    self.output.info(f"    - {file}")
+            else:
+                self.output.info("  Файлов нет")
+
+            # Печатаем директории
+            if dirs:
+                self.output.info("  Директории:")
+                for dir_name in sorted(dirs):
+                    self.output.info(f"    - {dir_name}")
+            else:
+                self.output.info("  Директорий нет")
+
+            # Рекурсивно обрабатываем поддиректории
+            for dir_name in sorted(dirs):
+                if dir_name not in ['.git', 'build', '__pycache__', 'venv']:  # Игнорируем некоторые директории
+                    self.output.info("\n")
+                    sub_dir = os.path.join(directory, dir_name)
+                    self.list_all_files(sub_dir)
+
+        except Exception as e:
+            self.output.error(f"Ошибка при чтении директории {directory}: {e}")
+
     @property
     def _minimum_cpp_standard(self):
         return 17
 
+    def source(self):
+        # Вызываем функцию вывода файлов перед началом сборки
+        self.output.info("=== СПИСОК ВСЕХ ФАЙЛОВ В ПРОЕКТЕ ===")
+        self.list_all_files(os.getcwd())
+        self.output.info("=== КОНЕЦ СПИСКА ФАЙЛОВ ===")
+
     def layout(self):
         cmake_layout(self)
-
-        # Распечатаем содержимое текущей директории
-        self.output.info("Содержимое текущей директории:")
-        current_dir = os.getcwd()
-        self.output.info(f"Текущая директория: {current_dir}")
-
-        # Печать всех файлов в текущей директории и поддиректориях
-        for root, dirs, files in os.walk(current_dir):
-            rel_path = os.path.relpath(root, current_dir)
-            if rel_path == ".":
-                self.output.info(f"Файлы в корневой директории:")
-            else:
-                self.output.info(f"Файлы в директории {rel_path}:")
-
-            for file in files:
-                self.output.info(f"  - {file}")
-
-            self.output.info("Поддиректории:")
-            for dir in dirs:
-                self.output.info(f"  - {dir}")
-
-            self.output.info("-" * 50)
 
     def requirements(self):
         self.requires("boost/1.86.0@")
@@ -70,24 +91,20 @@ class Otterbrix(ConanFile):
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
     def build(self):
-        # Дополнительно распечатаем содержимое на этапе сборки
-        self.output.info("Содержимое директории на этапе сборки:")
-        build_dir = os.getcwd()
-        self.output.info(f"Директория сборки: {build_dir}")
-
-        for item in os.listdir(build_dir):
-            self.output.info(f"  - {item}")
-
-        # Проверим наличие CMakeLists.txt
+        # Проверяем наличие CMakeLists.txt перед началом сборки
         if not os.path.exists("CMakeLists.txt"):
-            self.output.error("CMakeLists.txt не найден в текущей директории!")
-            self.output.info("Пытаемся найти CMakeLists.txt...")
-
-            for root, dirs, files in os.walk(build_dir):
+            self.output.error("ОШИБКА: CMakeLists.txt не найден в текущей директории!")
+            # Поиск CMakeLists.txt в других директориях
+            found_cmakelist = False
+            for root, dirs, files in os.walk(os.getcwd()):
                 if "CMakeLists.txt" in files:
-                    self.output.info(f"CMakeLists.txt найден в: {os.path.relpath(root, build_dir)}")
+                    rel_path = os.path.relpath(root, os.getcwd())
+                    self.output.info(f"CMakeLists.txt найден в: {rel_path}")
+                    found_cmakelist = True
 
-        # Продолжаем стандартную сборку
+            if not found_cmakelist:
+                self.output.error("CMakeLists.txt не найден нигде в проекте!")
+
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
