@@ -1,5 +1,4 @@
-from conan import ConanFile
-from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.cmake import cmake_layout
 from conans import ConanFile, CMake, tools
 import os
 
@@ -63,9 +62,9 @@ class Otterbrix(ConanFile):
         self.copy("*.hpp", dst="include", src=".")
         self.copy("*.h", dst="include", src=".")
         self.copy("*.dll", dst="bin", keep_path=False)  # Windows shared library
-        self.copy("*.so", dst="lib", keep_path=False)   # Linux shared library
-        self.copy("*.dylib", dst="lib", keep_path=False) # macOS shared library
-        self.copy("*.a", dst="lib", keep_path=False)    # Static library (if needed)
+        self.copy("*.so", dst="lib", keep_path=False)  # Linux shared library
+        self.copy("*.dylib", dst="lib", keep_path=False)  # macOS shared library
+        self.copy("*.a", dst="lib", keep_path=False)  # Static library (if needed)
 
     def package_info(self):
         self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
