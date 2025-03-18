@@ -1,30 +1,16 @@
 from conans import ConanFile, CMake, tools
 import os
-import shutil
 
 
-class Otterbrix(ConanFile):
+class OtterbrixRecipe(ConanFile):
     name = "otterbrix"
     description = "otterbrix is an open-source framework for developing conventional and analytical applications."
-    url = "https://github.com/duckstax/otterbrix"
-    homepage = "https://github.com/duckstax/otterbrix"
-    author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
-    exports = ["LICENSE.md"]
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
-    default_options = {
-        "shared": True,
-        "actor-zeta:cxx_standard": 17,
-        "actor-zeta:fPIC": True,
-        "actor-zeta:exceptions_disable": False,
-        "actor-zeta:rtti_disable": False,
-    }
-    generators = "cmake", "cmake_find_package"
+    default_options = {"shared": True}
+    generators = "cmake"
     exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
-
-    def _minimum_cpp_standard(self):
-        return 17
 
     def requirements(self):
         self.requires("boost/1.86.0@")
@@ -41,95 +27,53 @@ class Otterbrix(ConanFile):
         self.requires("magic_enum/0.8.1@")
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
-    def source(self):
-        self.output.info(f"Source method called, directory: {os.getcwd()}")
-        self.output.info(f"Current directory contents: {os.listdir(os.getcwd())}")
-
-        if os.path.exists("CMakeLists.txt"):
-            self.output.info("CMakeLists.txt found in current directory")
-        else:
-            recipe_folder = os.path.dirname(os.path.abspath(__file__))
-            self.output.info(f"Recipe folder: {recipe_folder}")
-            self.output.info(f"Recipe folder contents: {os.listdir(recipe_folder)}")
-
-            cmake_lists_path = os.path.join(recipe_folder, "CMakeLists.txt")
-            if os.path.exists(cmake_lists_path):
-                self.output.info(f"Found CMakeLists.txt in {cmake_lists_path}, copying to current dir")
-                shutil.copy2(cmake_lists_path, "CMakeLists.txt")
-            else:
-                self.output.error("CMakeLists.txt not found in recipe folder either!")
-
     def build(self):
+        # Ищем готовый conan_toolchain.cmake
+        toolchain_path = None
+        possible_paths = [
+            os.path.join(self.build_folder, "conan_toolchain.cmake"),
+            os.path.join(self.build_folder, "generators", "conan_toolchain.cmake"),
+            os.path.join(self.source_folder, "conan_toolchain.cmake"),
+            "conan_toolchain.cmake"
+        ]
+
+        for path in possible_paths:
+            if os.path.exists(path):
+                toolchain_path = path
+                self.output.info(f"Found toolchain file at: {path}")
+                break
+
+        # Если toolchain не найден, завершаем с ошибкой
+        if not toolchain_path:
+            self.output.error("conan_toolchain.cmake not found!")
+            raise Exception("conan_toolchain.cmake is required for building otterbrix")
+
+        # Запускаем CMake с указанием toolchain файла
         cmake = CMake(self)
-        self.output.info(f"Build method called, current directory: {os.getcwd()}")
-        self.output.info(f"Source folder: {self.source_folder}")
-        self.output.info(f"Build folder: {self.build_folder}")
-        self.output.info(f"Current directory contents: {os.listdir(os.getcwd())}")
-
-        if os.path.exists("CMakeLists.txt"):
-            self.output.info("CMakeLists.txt found in current directory, proceeding with build")
-            cmake.configure()
-            cmake.build()
-        else:
-            if os.path.exists(os.path.join(self.source_folder, "CMakeLists.txt")):
-                self.output.info(f"CMakeLists.txt found in source folder {self.source_folder}")
-                with tools.chdir(self.source_folder):
-                    self.output.info(f"Changed to directory: {os.getcwd()}")
-                    self.output.info(f"Directory contents: {os.listdir(os.getcwd())}")
-                    cmake.configure()
-                    cmake.build()
-            else:
-                recipe_folder = os.path.dirname(os.path.abspath(__file__))
-                if os.path.exists(os.path.join(recipe_folder, "CMakeLists.txt")):
-                    self.output.info(f"CMakeLists.txt found in recipe folder {recipe_folder}")
-                    with tools.chdir(recipe_folder):
-                        self.output.info(f"Changed to directory: {os.getcwd()}")
-                        self.output.info(f"Directory contents: {os.listdir(os.getcwd())}")
-                        cmake.configure()
-                        cmake.build()
-                else:
-                    self.output.error("CMakeLists.txt not found anywhere! Searching in directories...")
-
-                    for root, dirs, files in os.walk("/github/home/"):
-                        if "CMakeLists.txt" in files:
-                            self.output.info(f"Found CMakeLists.txt in: {os.path.join(root)}")
-
-                    raise Exception("CMakeLists.txt not found, build cannot proceed")
+        cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = toolchain_path
+        cmake.configure()
+        cmake.build()
 
     def package(self):
-        self.copy("*.hpp", dst="include/otterbrix", src="integration/cpp")
-        self.copy("*.h", dst="include/otterbrix", src="integration/cpp")
-        self.copy("*.hpp", dst="include", src=".")
-        self.copy("*.h", dst="include", src=".")
-        self.copy("*.dll", dst="bin", keep_path=False)  # Windows shared library
-        self.copy("*.so", dst="lib", keep_path=False)  # Linux shared library
-        self.copy("*.dylib", dst="lib", keep_path=False)  # macOS shared library
-        self.copy("*.a", dst="lib", keep_path=False)  # Static library (if needed)
+        cmake = CMake(self)
+        cmake.install()
 
     def package_info(self):
         self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_document")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_types")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_cursor")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_session")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_expressions")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_logical_plan")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("boost::boost")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("abseil::abseil")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("actor-zeta::actor-zeta")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("magic_enum::magic_enum")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("msgpack-cxx::msgpack-cxx")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("fmt::fmt")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("spdlog::spdlog")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("crc32c::crc32c")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("zlib::zlib")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("bzip2::bzip2")
+        # Добавляем компоненты
+        components = ["otterbrix_document", "otterbrix_types", "otterbrix_cursor",
+                      "otterbrix_session", "otterbrix_expressions", "otterbrix_logical_plan"]
 
-        self.cpp_info.components["otterbrix_document"].libs = ["otterbrix_document"]
-        self.cpp_info.components["otterbrix_types"].libs = ["otterbrix_types"]
-        self.cpp_info.components["otterbrix_cursor"].libs = ["otterbrix_cursor"]
-        self.cpp_info.components["otterbrix_session"].libs = ["otterbrix_session"]
-        self.cpp_info.components["otterbrix_expressions"].libs = ["otterbrix_expressions"]
-        self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
+        for comp in components:
+            self.cpp_info.components["cpp_otterbrix"].requires.append(comp)
+            self.cpp_info.components[comp].libs = [comp]
+
+        # Добавляем внешние зависимости
+        ext_deps = ["boost::boost", "abseil::abseil", "actor-zeta::actor-zeta",
+                    "magic_enum::magic_enum", "msgpack-cxx::msgpack-cxx", "fmt::fmt",
+                    "spdlog::spdlog", "crc32c::crc32c", "zlib::zlib", "bzip2::bzip2"]
+
+        for dep in ext_deps:
+            self.cpp_info.components["cpp_otterbrix"].requires.append(dep)
 
         self.cpp_info.includedirs = ["include"]
