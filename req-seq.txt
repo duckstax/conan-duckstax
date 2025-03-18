@@ -14,3 +14,5 @@ bzip2/1.0.8
 magic_enum/0.8.1
 
 actor-zeta/1.0.0a11
+
+otterbrix/1.0.0a10-rc
