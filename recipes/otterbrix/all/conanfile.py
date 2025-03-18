@@ -1,12 +1,14 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
 
-
 class Otterbrix(ConanFile):
-    name = "otterbrix"
-    license = "MIT"
-    description = "Otterbrix: computation framework for Semi-structured data processing"
+    name = "cpp_otterbrix"
+    description = "otterbrix is an open-source framework for developing conventional and analytical applications."
     url = "https://github.com/duckstax/otterbrix"
+    homepage = "https://github.com/duckstax/otterbrix"
+    author = "kotbegemot <k0tb9g9m0t@gmail.com>"
+    license = "MIT"
+    exports = ["LICENSE.md"]
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}  # Enable shared/static options
     generators = "CMakeDeps", "CMakeToolchain"
@@ -49,19 +51,22 @@ class Otterbrix(ConanFile):
 
     def package(self):
         self.copy("*.hpp", dst="include/otterbrix", src="integration/cpp")
+        self.copy("*.h", dst="include/otterbrix", src="integration/cpp")
         self.copy("*.hpp", dst="include", src=".")
+        self.copy("*.h", dst="include", src=".")
         self.copy("*.dll", dst="bin", keep_path=False)  # Windows shared library
-        self.copy("*.so", dst="lib", keep_path=False)  # Linux shared library
-        self.copy("*.dylib", dst="lib", keep_path=False)  # macOS shared library
-        self.copy("*.a", dst="lib", keep_path=False)  # Static library (if needed)
+        self.copy("*.so", dst="lib", keep_path=False)   # Linux shared library
+        self.copy("*.dylib", dst="lib", keep_path=False) # macOS shared library
+        self.copy("*.a", dst="lib", keep_path=False)    # Static library (if needed)
 
     def package_info(self):
         self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
         self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_document")
+        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_types")
         self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_cursor")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_ql")
         self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_session")
-        # self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_expressions")
+        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_expressions")
+        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_logical_plan")
         self.cpp_info.components["cpp_otterbrix"].requires.append("boost::boost")
         self.cpp_info.components["cpp_otterbrix"].requires.append("abseil::abseil")
         self.cpp_info.components["cpp_otterbrix"].requires.append("actor-zeta::actor-zeta")
@@ -74,9 +79,10 @@ class Otterbrix(ConanFile):
         self.cpp_info.components["cpp_otterbrix"].requires.append("bzip2::bzip2")
 
         self.cpp_info.components["otterbrix_document"].libs = ["otterbrix_document"]
+        self.cpp_info.components["otterbrix_types"].libs = ["otterbrix_types"]
         self.cpp_info.components["otterbrix_cursor"].libs = ["otterbrix_cursor"]
-        self.cpp_info.components["otterbrix_ql"].libs = ["otterbrix_ql"]
         self.cpp_info.components["otterbrix_session"].libs = ["otterbrix_session"]
         self.cpp_info.components["otterbrix_expressions"].libs = ["otterbrix_expressions"]
+        self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
 
         self.cpp_info.includedirs = ["include"]
