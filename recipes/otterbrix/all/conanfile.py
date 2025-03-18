@@ -1,5 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
+import os
+
 
 class Otterbrix(ConanFile):
     name = "otterbrix"
@@ -44,9 +46,15 @@ class Otterbrix(ConanFile):
         self.requires("magic_enum/0.8.1@")
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
+    def source(self):
+        pass
+
     def build(self):
+        if not os.path.exists(os.path.join(self.source_folder, "CMakeLists.txt")):
+            raise Exception(f"CMakeLists.txt not found in {self.source_folder}. Build cannot proceed.")
+
         cmake = CMake(self)
-        cmake.configure()
+        cmake.configure(source_folder=self.source_folder)
         cmake.build()
 
     def package(self):
@@ -55,9 +63,9 @@ class Otterbrix(ConanFile):
         self.copy("*.hpp", dst="include", src=".")
         self.copy("*.h", dst="include", src=".")
         self.copy("*.dll", dst="bin", keep_path=False)  # Windows shared library
-        self.copy("*.so", dst="lib", keep_path=False)   # Linux shared library
-        self.copy("*.dylib", dst="lib", keep_path=False) # macOS shared library
-        self.copy("*.a", dst="lib", keep_path=False)    # Static library (if needed)
+        self.copy("*.so", dst="lib", keep_path=False)  # Linux shared library
+        self.copy("*.dylib", dst="lib", keep_path=False)  # macOS shared library
+        self.copy("*.a", dst="lib", keep_path=False)  # Static library (if needed)
 
     def package_info(self):
         self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]

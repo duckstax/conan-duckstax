@@ -12,20 +12,9 @@ on:
 jobs:
   build-and-upload:
     name: Build and Upload Conan Packages
-
-    strategy:
-      fail-fast: false
-      matrix:
-        configuration: [
-          {"UBUNTU_VERSION": "20.04"},
-          # Uncomment needed versions if required
-          # {"UBUNTU_VERSION": "18.04"},
-          # {"UBUNTU_VERSION": "22.04"},
-        ]
-
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:${{matrix.configuration.UBUNTU_VERSION}}
+      image: ubuntu:20.04
 
     steps:
       - name: Checkout repository
@@ -33,160 +22,60 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
           apt update
-          apt install -y build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https git
-          # Additional dependencies that might be needed for otterbrix
-          # apt install -y cmake libssl-dev zlib1g-dev libboost-all-dev
+          apt install -y build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https git cmake libssl-dev zlib1g-dev libboost-all-dev
 
-      #- name: Diagnostic info
-      #  run: |
-     #     cmake --version
-      #    gcc --version
-      #    echo "System libraries:"
-      #    ldconfig -p | grep -E 'ssl|boost|z' || echo "No matching libraries found"
-      #    echo "System directories:"
-      #    ls -la /usr/include | grep -E 'boost|ssl|openssl' || echo "No matching directories found"
-
-      - name: Set up Python and Conan
+      - name: Set up Conan
         run: |
           pip install conan==1.64.1 cmake
           conan user
           conan profile new default --detect --force
           conan profile update settings.compiler.libcxx=libstdc++11 default
-          conan config set general.parallel_download=$(nproc)
-          conan config set general.cpu_count=$(nproc)
           conan remote add duckstax http://conan.duckstax.com
 
-          # Show conan profile for debugging
-          echo "Conan profile content:"
-          cat ~/.conan/profiles/default
-
-      - name: Check changes in packages
-        id: changes
+      - name: Prepare package list
         run: |
-          # Create req-seq.txt file
+          # Create req-seq.txt with all packages
           touch req-seq.txt
-
-          # Determine which packages were changed
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # For PR, try to compare with base branch if possible
-            echo "Processing Pull Request"
-            # Fallback to scanning all recipe directories if we can't get changed files
-            for dir in recipes/*/; do
-              if [ -d "$dir" ]; then
-                PACKAGE_NAME=$(basename "$dir")
-                PACKAGE_DIR=$(find "$dir" -name conanfile.py -type f | head -n 1 | xargs dirname)
-                if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
-                  VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' "$PACKAGE_DIR/conanfile.py" || echo "")
-                  if [ -n "$VERSION" ]; then
-                    echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
-                  fi
+          for dir in recipes/*/; do
+            if [ -d "$dir" ]; then
+              PACKAGE_NAME=$(basename "$dir")
+              PACKAGE_DIR=$(find "$dir" -name conanfile.py -type f | head -n 1 | xargs dirname)
+              if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
+                VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' "$PACKAGE_DIR/conanfile.py" || echo "")
+                if [ -n "$VERSION" ]; then
+                  echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
                 fi
               fi
-            done
-          else
-            # For push, scan modified recipe directories
-            echo "Processing Push event"
-            for dir in recipes/*/; do
-              if [ -d "$dir" ]; then
-                PACKAGE_NAME=$(basename "$dir")
-                PACKAGE_DIR=$(find "$dir" -name conanfile.py -type f | head -n 1 | xargs dirname)
-                if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
-                  VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' "$PACKAGE_DIR/conanfile.py" || echo "")
-                  if [ -n "$VERSION" ]; then
-                    echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
-                  fi
-                fi
-              fi
-            done
-          fi
+            fi
+          done
 
           # Remove duplicates
           sort -u req-seq.txt -o req-seq.txt
 
           # Check if there are packages to build
           if [ -s req-seq.txt ]; then
-            echo "PACKAGES_TO_BUILD=true" >> $GITHUB_ENV
             echo "Found packages to build:"
             cat req-seq.txt
-
-            # Check for otterbrix package specifically
-            if grep -q "otterbrix" req-seq.txt; then
-              echo "CONTAINS_OTTERBRIX=true" >> $GITHUB_ENV
-              echo "Found otterbrix package in the build list"
-              # Special handling for otterbrix: look at its conanfile.py
-              for dir in recipes/otterbrix/*/; do
-                if [ -f "${dir}conanfile.py" ]; then
-                  echo "Examining otterbrix conanfile.py:"
-                  grep -n "cmake\.configure" "${dir}conanfile.py" || echo "No cmake.configure found"
-                  grep -n "self\.cpp_info" "${dir}conanfile.py" || echo "No cpp_info found"
-                  grep -n "cmake\.definitions" "${dir}conanfile.py" || echo "No cmake.definitions found"
-                fi
-              done
-            else
-              echo "CONTAINS_OTTERBRIX=false" >> $GITHUB_ENV
-            fi
           else
-            echo "PACKAGES_TO_BUILD=false" >> $GITHUB_ENV
             echo "No packages to build"
+            exit 0
           fi
 
-      - name: Create and upload packages
-        if: env.PACKAGES_TO_BUILD == 'true'
+      - name: Build packages
         run: |
           chmod +x create-and-upload-conan.sh
 
-          # For PR or non-master branches: build only without upload
           IS_PR="${{ github.event_name == 'pull_request' }}"
           IS_MASTER="${{ github.ref == 'refs/heads/master' }}"
 
           if [ "$IS_PR" = "true" ] || [ "$IS_MASTER" = "false" ]; then
             echo "Build only mode (no upload)"
-            ./create-and-upload-conan.sh --no-upload --profile=default --debug
+            ./create-and-upload-conan.sh --no-upload --profile=default
           else
-            # For master branch: authenticate and perform full build and upload cycle
             echo "Build and upload mode"
             conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}
-            ./create-and-upload-conan.sh --profile=default --debug
-          fi
-
-      - name: Debug otterbrix build failure
-        if: ${{ failure() && env.CONTAINS_OTTERBRIX == 'true' }}
-        run: |
-          echo "Debugging otterbrix build failure..."
-
-          echo "Checking for otterbrix build directories:"
-          find ~/.conan/data/otterbrix -type d -name "build" || echo "No build directories found"
-
-          echo "Searching for toolchain files:"
-          find ~/.conan/data/otterbrix -name "conan_toolchain.cmake" || echo "No toolchain files found"
-
-          # Если найден toolchain-файл, проверяем его содержимое
-          TOOLCHAIN=$(find ~/.conan/data/otterbrix -name "conan_toolchain.cmake" | head -n 1)
-          if [ -n "$TOOLCHAIN" ]; then
-            echo "Toolchain file found at: $TOOLCHAIN"
-            echo "Toolchain file content (first 20 lines):"
-            head -n 20 "$TOOLCHAIN"
-
-            echo "Critical settings in toolchain:"
-            grep -i "CMAKE_CXX_COMPILER" "$TOOLCHAIN" || echo "No C++ compiler setting found"
-            grep -i "CMAKE_BUILD_TYPE" "$TOOLCHAIN" || echo "No build type setting found"
-          fi
-
-          # Проверяем лог ошибок CMake, если он существует
-          CMAKE_ERROR_LOG=$(find ~/.conan/data/otterbrix -name "CMakeError.log" | head -n 1)
-          if [ -n "$CMAKE_ERROR_LOG" ]; then
-            echo "CMake error log found at: $CMAKE_ERROR_LOG"
-            echo "CMake error log content:"
-            cat "$CMAKE_ERROR_LOG"
-          fi
-
-          # Проверяем conaninfo.txt, если он существует
-          CONANINFO=$(find ~/.conan/data/otterbrix -name "conaninfo.txt" | head -n 1)
-          if [ -n "$CONANINFO" ]; then
-            echo "Conaninfo file found at: $CONANINFO"
-            echo "Conaninfo content:"
-            cat "$CONANINFO"
+            ./create-and-upload-conan.sh --profile=default
           fi

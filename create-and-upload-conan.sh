@@ -259,6 +259,7 @@ create_package() {
     # Check if recipe directory exists
     if [ ! -d "recipes/$package_name" ]; then
         log "ERROR" "Directory recipes/$package_name not found"
+        echo "FAILURE REASON: Recipe directory not found for $package_name" >> .build_failures
         return 1
     fi
 
@@ -267,45 +268,39 @@ create_package() {
         check_toolchain_files "$package_name" "$package_version" "before"
     fi
 
-    # Создаем временный файл для вывода ошибок
-    local error_output=$(mktemp)
+    # Сохраняем stdout и stderr в отдельные файлы для этого пакета
+    local log_dir="build_logs"
+    mkdir -p "$log_dir"
+    local stdout_log="$log_dir/${package_name}_${package_version}_stdout.log"
+    local stderr_log="$log_dir/${package_name}_${package_version}_stderr.log"
 
-    # Установка переменных окружения для отладки
+    # Запускаем сборку с сохранением логов
     local env_vars=""
     if [ "$DEBUG_MODE" = "true" ]; then
         env_vars="CONAN_LOGGING_LEVEL=debug CONAN_CMAKE_VERBOSE_MAKEFILE=1"
-        log "DEBUG" "Using debug environment variables: $env_vars"
     fi
 
-    # Create package with specified build profile
-    if eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE > >(tee -a "$LOG_FILE") 2> >(tee "$error_output" >&2); then
+    # Четкий статус ошибки и подробные логи
+    if eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE > "$stdout_log" 2> "$stderr_log"; then
         log "SUCCESS" "Package $package_ref successfully created"
-        rm -f "$error_output"
+        echo "$package: SUCCESS" >> .build_results
         return 0
     else
-        local error_msg=$(cat "$error_output")
-        log "ERROR" "Failed to create package $package_ref"
-        log "ERROR" "Error output: $error_msg"
+        local exit_code=$?
+        log "ERROR" "Failed to create package $package_ref (exit code: $exit_code)"
+        log "ERROR" "See logs in $stdout_log and $stderr_log"
 
-        # Проверка для конкретного пакета otterbrix
+        # Сохраняем причину ошибки для отчетности
+        echo "$package: FAILED (exit code: $exit_code)" >> .build_results
+
+        # Если это otterbrix, сохраняем детальный лог ошибки
         if [[ "$package_name" == "otterbrix" ]]; then
-            log "DEBUG" "Special debugging for otterbrix package"
-            # Проверка conanfile.py
-            local conanfile="recipes/$package_name/*/conanfile.py"
-            if [ -f "$conanfile" ]; then
-                log "DEBUG" "Checking conanfile.py for otterbrix:"
-                grep -n "cmake\.configure" "$conanfile" | log "DEBUG"
-                grep -n "self\.cpp_info" "$conanfile" | log "DEBUG"
-                grep -n "cmake\.definitions" "$conanfile" | log "DEBUG"
-            fi
+            cat "$stderr_log" > "otterbrix_failure.log"
+            echo "FAILURE REASON: See otterbrix_failure.log for details" >> .build_failures
+        else
+            echo "FAILURE REASON: Build failure with exit code $exit_code" >> .build_failures
         fi
 
-        # Проверка toolchain файлов после неудачной сборки
-        if [ "$DEBUG_MODE" = "true" ]; then
-            check_toolchain_files "$package_name" "$package_version" "after"
-        fi
-
-        rm -f "$error_output"
         return 1
     fi
 }
@@ -366,20 +361,23 @@ check_results() {
         done
     fi
 
-    # Output summary
+    # Output summary с четким статусом
     echo
     echo -e "${GREEN}Operation summary:${RESET}"
     echo -e "Total packages: $total_count"
     echo -e "Successfully processed: $success_count"
-    if [ $error_count -gt 0 ]; then
-        echo -e "${RED}Errors: $error_count${RESET}"
-        echo "recipes_create_result=err" > .create_result_tmp
-    else
-        echo -e "${GREEN}Errors: $error_count${RESET}"
-        echo "recipes_create_result=success" > .create_result_tmp
-    fi
+    echo -e "Failed packages: $error_count"
 
-    log "INFO" "Operations completed. Success: $success_count, Errors: $error_count"
+    # Сохраняем четкий статус в файл вместо закодированных значений
+    if [ $error_count -gt 0 ]; then
+        echo -e "${RED}BUILD STATUS: FAILURE${RESET}"
+        echo "BUILD STATUS: FAILURE" > .build_status
+        return 1
+    else
+        echo -e "${GREEN}BUILD STATUS: SUCCESS${RESET}"
+        echo "BUILD STATUS: SUCCESS" > .build_status
+        return 0
+    fi
 }
 
 # Main script function
@@ -401,8 +399,8 @@ main() {
 
     # Check if there are packages to process
     if [ ! -s "$RESULT_FILE" ]; then
-        echo -e "${GREEN}-> No packages to upload, all required packages are already uploaded.${RESET}"
-        echo "recipes_create_result=ntu" > .create_result_tmp
+        echo -e "${GREEN}No packages to build - all packages are already built.${RESET}"
+        echo "BUILD STATUS: NO_PACKAGES_NEEDED" > .build_status
         cleanup
         exit 0
     fi
@@ -413,7 +411,7 @@ main() {
     echo -e "${GREEN}------------------------------------------${RESET}"
 
     # Create and upload packages
-    local failed_packages=""
+    local failed_packages=()
 
     for package in $(cat "$RESULT_FILE"); do
         echo -e "${YELLOW}Processing package: $package${RESET}"
@@ -424,30 +422,36 @@ main() {
                     echo -e "${GREEN}Package $package successfully created and uploaded${RESET}"
                     echo
                 else
-                    failed_packages="$failed_packages\n$package (upload error)"
+                    failed_packages+=("$package (upload error)")
                 fi
             else
                 echo -e "${GREEN}Package $package successfully created (upload disabled)${RESET}"
                 echo
             fi
         else
-            failed_packages="$failed_packages\n$package (creation error)"
+            failed_packages+=("$package (creation error)")
         fi
     done
 
     # Check results
     check_results
+    local result_code=$?
 
     # Output information about failed packages
-    if [ ! -z "$failed_packages" ]; then
+    if [ ${#failed_packages[@]} -gt 0 ]; then
         echo -e "${RED}List of packages with errors:${RESET}"
-        echo -e "$failed_packages" | sed '/^$/d'
+        for pkg in "${failed_packages[@]}"; do
+            echo -e "  - $pkg"
+        done
     fi
 
     # Cleanup
     cleanup
 
     echo -e "${GREEN}Script completed. Details in file: $LOG_FILE${RESET}"
+
+    # Возвращаем четкий статус
+    exit $result_code
 }
 
 # Run main function
