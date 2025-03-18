@@ -4,12 +4,11 @@ import os
 
 class OtterbrixRecipe(ConanFile):
     name = "otterbrix"
-    version = "1.0.0a10-rc"
     license = "MIT"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = {"shared": True}
-    generators = "CMakeToolchain", "cmake", "cmake_find_package", "cmake_paths"
+    generators = "cmake", "CMakeToolchain", "CMakeDeps"
     exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
 
     def requirements(self):
@@ -32,7 +31,6 @@ class OtterbrixRecipe(ConanFile):
         if not os.path.exists(toolchain_path):
             raise Exception("conan_toolchain.cmake not found")
 
-        # Используем CMake с toolchain
         cmake = CMake(self)
         cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = toolchain_path
         cmake.configure()

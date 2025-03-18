@@ -66,6 +66,7 @@ jobs:
 
       - name: Build packages
         run: |
+          export CONAN_DISABLE_STRICT_MODE=1
           chmod +x create-and-upload-conan.sh
 
           IS_PR="${{ github.event_name == 'pull_request' }}"
