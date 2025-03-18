@@ -73,7 +73,7 @@ jobs:
 
           if [ "$IS_PR" = "true" ] || [ "$IS_MASTER" = "false" ]; then
             echo "Build only mode (no upload)"
-            ./create-and-upload-conan.sh --no-upload --profile=default
+            ./create-and-upload-conan.sh --no-upload --profile=default --debug
           else
             echo "Build and upload mode"
             conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}

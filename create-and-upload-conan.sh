@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Строгий режим выполнения: скрипт завершится при любой ошибке
+set -e  # Остановка выполнения при любой ошибке
+set -o pipefail  # Если команда в конвейере возвращает ошибку, весь конвейер завершается с этой ошибкой
+
 # -- variables --
 CONAN_REMOTE="duckstax"
 RESULT_FILE="result.txt"
@@ -59,29 +63,8 @@ log() {
     local message="$2"
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
-    # Цветовая схема для разных уровней логирования
-    local color=""
-    case $level in
-        "INFO")
-            color=$GREEN
-            ;;
-        "ERROR")
-            color=$RED
-            ;;
-        "WARNING")
-            color=$YELLOW
-            ;;
-        "DEBUG")
-            color=$BLUE
-            # В обычном режиме не выводим отладочные сообщения
-            if [ "$DEBUG_MODE" != "true" ]; then
-                echo -e "[$timestamp] [$level] $message" >> "$LOG_FILE"
-                return
-            fi
-            ;;
-    esac
-
-    echo -e "[$timestamp] ${color}[$level]${RESET} $message" | tee -a "$LOG_FILE"
+    # Всегда выводим все сообщения, включая DEBUG
+    echo -e "[$timestamp] [${level}] $message" | tee -a "$LOG_FILE"
 }
 
 # Check if Conan is installed
@@ -247,7 +230,7 @@ create_package() {
 
     if [ -z "$package" ]; then
         log "ERROR" "Empty package name passed"
-        return 1
+        exit 1  # Завершаем скрипт с ошибкой
     fi
 
     local package_name=${package%/*}
@@ -259,8 +242,7 @@ create_package() {
     # Check if recipe directory exists
     if [ ! -d "recipes/$package_name" ]; then
         log "ERROR" "Directory recipes/$package_name not found"
-        echo "FAILURE REASON: Recipe directory not found for $package_name" >> .build_failures
-        return 1
+        exit 1  # Завершаем скрипт с ошибкой
     fi
 
     # Проверка toolchain файлов до сборки
@@ -268,41 +250,28 @@ create_package() {
         check_toolchain_files "$package_name" "$package_version" "before"
     fi
 
-    # Сохраняем stdout и stderr в отдельные файлы для этого пакета
-    local log_dir="build_logs"
-    mkdir -p "$log_dir"
-    local stdout_log="$log_dir/${package_name}_${package_version}_stdout.log"
-    local stderr_log="$log_dir/${package_name}_${package_version}_stderr.log"
-
-    # Запускаем сборку с сохранением логов
+    # Устанавливаем переменные окружения для отладки, если нужно
     local env_vars=""
     if [ "$DEBUG_MODE" = "true" ]; then
         env_vars="CONAN_LOGGING_LEVEL=debug CONAN_CMAKE_VERBOSE_MAKEFILE=1"
     fi
 
-    # Четкий статус ошибки и подробные логи
-    if eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE > "$stdout_log" 2> "$stderr_log"; then
-        log "SUCCESS" "Package $package_ref successfully created"
-        echo "$package: SUCCESS" >> .build_results
-        return 0
-    else
-        local exit_code=$?
-        log "ERROR" "Failed to create package $package_ref (exit code: $exit_code)"
-        log "ERROR" "See logs in $stdout_log and $stderr_log"
+    # Запускаем сборку и явно выходим с ошибкой при любом сбое
+    log "INFO" "Running: $env_vars conan create \"recipes/$package_name\"/*/  \"$package_ref\" --build missing -pr:b=$BUILD_PROFILE"
+    if ! eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE; then
+        log "ERROR" "Failed to create package $package_ref"
 
-        # Сохраняем причину ошибки для отчетности
-        echo "$package: FAILED (exit code: $exit_code)" >> .build_results
-
-        # Если это otterbrix, сохраняем детальный лог ошибки
-        if [[ "$package_name" == "otterbrix" ]]; then
-            cat "$stderr_log" > "otterbrix_failure.log"
-            echo "FAILURE REASON: See otterbrix_failure.log for details" >> .build_failures
-        else
-            echo "FAILURE REASON: Build failure with exit code $exit_code" >> .build_failures
+        # Если это otterbrix, выполняем дополнительную диагностику
+        if [[ "$package_name" == "otterbrix" ]] && [ "$DEBUG_MODE" = "true" ]; then
+            log "DEBUG" "Special debugging for otterbrix package"
+            check_toolchain_files "$package_name" "$package_version" "after"
         fi
 
-        return 1
+        exit 1  # Завершаем скрипт с ошибкой
     fi
+
+    log "SUCCESS" "Package $package_ref successfully created"
+    return 0
 }
 
 # Upload package
@@ -311,7 +280,7 @@ upload_package() {
 
     if [ -z "$package" ]; then
         log "ERROR" "Empty package name passed"
-        return 1
+        exit 1  # Завершаем скрипт с ошибкой
     fi
 
     local package_ref="${package}@${USER}/${CHANNEL}"
@@ -319,65 +288,23 @@ upload_package() {
     log "INFO" "Uploading package $package_ref to repository $CONAN_REMOTE"
 
     # Upload package
-    if conan upload "$package_ref" -r "$CONAN_REMOTE" --all --confirm; then
-        log "SUCCESS" "Package $package_ref successfully uploaded"
-        return 0
-    else
+    if ! conan upload "$package_ref" -r "$CONAN_REMOTE" --all --confirm; then
         log "ERROR" "Failed to upload package $package_ref"
-        return 1
+        exit 1  # Завершаем скрипт с ошибкой
     fi
+
+    log "SUCCESS" "Package $package_ref successfully uploaded"
+    return 0
 }
 
-# Check results
+# Check results - упрощенная проверка, так как при ошибке скрипт уже завершится
 check_results() {
-    local error_count=0
-    local success_count=0
     local total_count=$(wc -l < "$RESULT_FILE")
 
     echo
-    log "INFO" "Checking operation results"
-
-    if $UPLOAD_PACKAGES; then
-        # Check uploaded packages
-        for package in $(cat "$RESULT_FILE"); do
-            local package_ref="${package}@${USER}/${CHANNEL}"
-            if conan search -r="$CONAN_REMOTE" "$package_ref" &>/dev/null; then
-                ((success_count++))
-            else
-                ((error_count++))
-                echo -e "${RED}Error: $package_ref not found in repository${RESET}"
-            fi
-        done
-    else
-        # Check only locally created packages
-        for package in $(cat "$RESULT_FILE"); do
-            local package_ref="${package}@${USER}/${CHANNEL}"
-            if conan search "$package_ref" &>/dev/null; then
-                ((success_count++))
-            else
-                ((error_count++))
-                echo -e "${RED}Error: $package_ref not found locally${RESET}"
-            fi
-        done
-    fi
-
-    # Output summary с четким статусом
-    echo
-    echo -e "${GREEN}Operation summary:${RESET}"
-    echo -e "Total packages: $total_count"
-    echo -e "Successfully processed: $success_count"
-    echo -e "Failed packages: $error_count"
-
-    # Сохраняем четкий статус в файл вместо закодированных значений
-    if [ $error_count -gt 0 ]; then
-        echo -e "${RED}BUILD STATUS: FAILURE${RESET}"
-        echo "BUILD STATUS: FAILURE" > .build_status
-        return 1
-    else
-        echo -e "${GREEN}BUILD STATUS: SUCCESS${RESET}"
-        echo "BUILD STATUS: SUCCESS" > .build_status
-        return 0
-    fi
+    log "INFO" "Operation summary"
+    echo -e "${GREEN}Successfully processed $total_count packages${RESET}"
+    log "INFO" "Operations completed successfully"
 }
 
 # Main script function
@@ -399,8 +326,7 @@ main() {
 
     # Check if there are packages to process
     if [ ! -s "$RESULT_FILE" ]; then
-        echo -e "${GREEN}No packages to build - all packages are already built.${RESET}"
-        echo "BUILD STATUS: NO_PACKAGES_NEEDED" > .build_status
+        echo -e "${GREEN}-> No packages to upload, all required packages are already uploaded.${RESET}"
         cleanup
         exit 0
     fi
@@ -411,47 +337,31 @@ main() {
     echo -e "${GREEN}------------------------------------------${RESET}"
 
     # Create and upload packages
-    local failed_packages=()
-
     for package in $(cat "$RESULT_FILE"); do
         echo -e "${YELLOW}Processing package: $package${RESET}"
 
-        if create_package "$package"; then
-            if $UPLOAD_PACKAGES; then
-                if upload_package "$package"; then
-                    echo -e "${GREEN}Package $package successfully created and uploaded${RESET}"
-                    echo
-                else
-                    failed_packages+=("$package (upload error)")
-                fi
-            else
-                echo -e "${GREEN}Package $package successfully created (upload disabled)${RESET}"
-                echo
-            fi
+        # Создаем пакет (функция завершит скрипт при ошибке)
+        create_package "$package"
+
+        # Загружаем пакет, если требуется (функция завершит скрипт при ошибке)
+        if $UPLOAD_PACKAGES; then
+            upload_package "$package"
+            echo -e "${GREEN}Package $package successfully created and uploaded${RESET}"
+            echo
         else
-            failed_packages+=("$package (creation error)")
+            echo -e "${GREEN}Package $package successfully created (upload disabled)${RESET}"
+            echo
         fi
     done
 
     # Check results
     check_results
-    local result_code=$?
-
-    # Output information about failed packages
-    if [ ${#failed_packages[@]} -gt 0 ]; then
-        echo -e "${RED}List of packages with errors:${RESET}"
-        for pkg in "${failed_packages[@]}"; do
-            echo -e "  - $pkg"
-        done
-    fi
 
     # Cleanup
     cleanup
 
-    echo -e "${GREEN}Script completed. Details in file: $LOG_FILE${RESET}"
-
-    # Возвращаем четкий статус
-    exit $result_code
+    echo -e "${GREEN}Script completed successfully. Details in file: $LOG_FILE${RESET}"
+    exit 0
 }
 
 # Run main function
