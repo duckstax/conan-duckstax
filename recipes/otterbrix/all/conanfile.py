@@ -1,3 +1,5 @@
+import os
+
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
 
@@ -46,6 +48,47 @@ class Otterbrix(ConanFile):
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
     def build(self):
+        # Распечатываем информацию о директориях
+        self.output.info("=== ДИРЕКТОРИИ В НАЧАЛЕ ФУНКЦИИ BUILD() ===")
+        self.output.info(f"Текущая директория: {os.getcwd()}")
+        self.output.info(f"Директория рецепта: {self.recipe_folder}")
+        self.output.info(f"Директория исходников: {self.source_folder}")
+        self.output.info(f"Директория сборки: {self.build_folder}")
+        self.output.info(f"Директория пакета: {self.package_folder}")
+
+        # Распечатываем файлы в текущей директории
+        self.output.info("\n=== ФАЙЛЫ В ТЕКУЩЕЙ ДИРЕКТОРИИ ===")
+        for item in os.listdir(os.getcwd()):
+            if os.path.isfile(item):
+                self.output.info(f"  - ФАЙЛ: {item}")
+            else:
+                self.output.info(f"  - ДИР : {item}")
+
+        # Распечатываем файлы в директории исходников
+        if self.source_folder and os.path.exists(self.source_folder):
+            self.output.info("\n=== ФАЙЛЫ В ДИРЕКТОРИИ ИСХОДНИКОВ ===")
+            for item in os.listdir(self.source_folder):
+                if os.path.isfile(os.path.join(self.source_folder, item)):
+                    self.output.info(f"  - ФАЙЛ: {item}")
+                else:
+                    self.output.info(f"  - ДИР : {item}")
+
+                    # Проверяем первый уровень поддиректорий
+                    subdir_path = os.path.join(self.source_folder, item)
+                    if os.path.exists(subdir_path):
+                        for subitem in os.listdir(subdir_path):
+                            self.output.info(f"      {item}/{subitem}")
+
+            # Проверяем наличие CMakeLists.txt
+            if os.path.exists(os.path.join(self.source_folder, "CMakeLists.txt")):
+                self.output.info("CMakeLists.txt НАЙДЕН в директории исходников")
+            else:
+                self.output.error("CMakeLists.txt НЕ НАЙДЕН в директории исходников")
+        else:
+            self.output.error(f"Директория исходников {self.source_folder} не существует!")
+
+        # Продолжаем обычную сборку
+        self.output.info("\n=== НАЧИНАЕМ КОНФИГУРАЦИЮ CMAKE ===")
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
