@@ -112,10 +112,10 @@ jobs:
 
           if [ "$IS_PR" = "true" ] || [ "$IS_MASTER" = "false" ]; then
             echo "Build only mode (no upload)"
-            ./create-and-upload-conan.sh --no-upload
+            ./create-and-upload-conan.sh --no-upload --profile=default
           else
             # For master branch: authenticate and perform full build and upload cycle
             echo "Build and upload mode"
             conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}
-            ./create-and-upload-conan.sh
+            ./create-and-upload-conan.sh --profile=default
           fi

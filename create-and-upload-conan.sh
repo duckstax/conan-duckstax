@@ -11,6 +11,7 @@ LOG_FILE="conan_operation.log"
 USER="duckstax"
 CHANNEL="stable"
 UPLOAD_PACKAGES=true  # By default, packages are uploaded
+BUILD_PROFILE="default"  # Default build profile
 
 # Command line arguments processing
 for arg in "$@"; do
@@ -19,11 +20,16 @@ for arg in "$@"; do
             UPLOAD_PACKAGES=false
             shift
             ;;
+        --profile=*)
+            BUILD_PROFILE="${arg#*=}"
+            shift
+            ;;
         --help)
             echo "Usage: $0 [options]"
             echo "Options:"
-            echo "  --no-upload    Create packages only without uploading to remote"
-            echo "  --help         Show this help message"
+            echo "  --no-upload       Create packages only without uploading to remote"
+            echo "  --profile=NAME    Specify build profile (default: default)"
+            echo "  --help            Show this help message"
             exit 0
             ;;
         *)
@@ -155,7 +161,7 @@ create_package() {
     local package_version=${package#*/}
     local package_ref="${package}@${USER}/${CHANNEL}"
 
-    log "INFO" "Creating package $package_ref"
+    log "INFO" "Creating package $package_ref with build profile $BUILD_PROFILE"
 
     # Check if recipe directory exists
     if [ ! -d "recipes/$package_name" ]; then
@@ -163,8 +169,8 @@ create_package() {
         return 1
     fi
 
-    # Create package
-    if conan create "recipes/$package_name"/*/ "$package_ref" --build missing; then
+    # Create package with specified build profile
+    if conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE; then
         log "SUCCESS" "Package $package_ref successfully created"
         return 0
     else
@@ -249,6 +255,7 @@ check_results() {
 main() {
     echo -e "${GREEN}=== Conan Package Creation and Upload ===${RESET}"
     echo "Execution started: $(date)" > "$LOG_FILE"
+    echo -e "${YELLOW}Using build profile: $BUILD_PROFILE${RESET}"
 
     # Environment checks
     check_conan
