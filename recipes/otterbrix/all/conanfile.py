@@ -1,5 +1,6 @@
 from conans import ConanFile, CMake, tools
 import os
+import shutil
 
 
 class Otterbrix(ConanFile):
@@ -40,17 +41,60 @@ class Otterbrix(ConanFile):
         self.requires("magic_enum/0.8.1@")
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
+    def source(self):
+        self.output.info(f"Source method called, directory: {os.getcwd()}")
+        self.output.info(f"Current directory contents: {os.listdir(os.getcwd())}")
+
+        if os.path.exists("CMakeLists.txt"):
+            self.output.info("CMakeLists.txt found in current directory")
+        else:
+            recipe_folder = os.path.dirname(os.path.abspath(__file__))
+            self.output.info(f"Recipe folder: {recipe_folder}")
+            self.output.info(f"Recipe folder contents: {os.listdir(recipe_folder)}")
+
+            cmake_lists_path = os.path.join(recipe_folder, "CMakeLists.txt")
+            if os.path.exists(cmake_lists_path):
+                self.output.info(f"Found CMakeLists.txt in {cmake_lists_path}, copying to current dir")
+                shutil.copy2(cmake_lists_path, "CMakeLists.txt")
+            else:
+                self.output.error("CMakeLists.txt not found in recipe folder either!")
+
     def build(self):
         cmake = CMake(self)
+        self.output.info(f"Build method called, current directory: {os.getcwd()}")
         self.output.info(f"Source folder: {self.source_folder}")
         self.output.info(f"Build folder: {self.build_folder}")
+        self.output.info(f"Current directory contents: {os.listdir(os.getcwd())}")
 
-        if not os.path.exists(os.path.join(self.source_folder, "CMakeLists.txt")):
-            raise Exception(f"CMakeLists.txt not found in {self.source_folder}")
-
-        with tools.chdir(self.source_folder):
+        if os.path.exists("CMakeLists.txt"):
+            self.output.info("CMakeLists.txt found in current directory, proceeding with build")
             cmake.configure()
             cmake.build()
+        else:
+            if os.path.exists(os.path.join(self.source_folder, "CMakeLists.txt")):
+                self.output.info(f"CMakeLists.txt found in source folder {self.source_folder}")
+                with tools.chdir(self.source_folder):
+                    self.output.info(f"Changed to directory: {os.getcwd()}")
+                    self.output.info(f"Directory contents: {os.listdir(os.getcwd())}")
+                    cmake.configure()
+                    cmake.build()
+            else:
+                recipe_folder = os.path.dirname(os.path.abspath(__file__))
+                if os.path.exists(os.path.join(recipe_folder, "CMakeLists.txt")):
+                    self.output.info(f"CMakeLists.txt found in recipe folder {recipe_folder}")
+                    with tools.chdir(recipe_folder):
+                        self.output.info(f"Changed to directory: {os.getcwd()}")
+                        self.output.info(f"Directory contents: {os.listdir(os.getcwd())}")
+                        cmake.configure()
+                        cmake.build()
+                else:
+                    self.output.error("CMakeLists.txt not found anywhere! Searching in directories...")
+
+                    for root, dirs, files in os.walk("/github/home/"):
+                        if "CMakeLists.txt" in files:
+                            self.output.info(f"Found CMakeLists.txt in: {os.path.join(root)}")
+
+                    raise Exception("CMakeLists.txt not found, build cannot proceed")
 
     def package(self):
         self.copy("*.hpp", dst="include/otterbrix", src="integration/cpp")
