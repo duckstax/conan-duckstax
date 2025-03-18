@@ -1,5 +1,6 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.files import copy
 import os
 
 
@@ -11,69 +12,45 @@ class Otterbrix(ConanFile):
     homepage = "https://github.com/duckstax/otterbrix"
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
-    exports = ["LICENSE.md"]
+    package_type = "library"
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False]}  # Enable shared/static options
-    generators = "CMakeDeps", "CMakeToolchain"
-    exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
-
+    options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {
         "shared": True,
+        "fPIC": True,
         "actor-zeta:cxx_standard": 17,
         "actor-zeta:fPIC": True,
         "actor-zeta:exceptions_disable": False,
         "actor-zeta:rtti_disable": False,
     }
 
-    def list_all_files(self, directory):
-        """Показывает все файлы и директории рекурсивно"""
-        self.output.info(f"Директория: {directory}")
+    def export_sources(self):
+        copy(self, "CMakeLists.txt", src=self.recipe_folder, dst=self.export_sources_folder)
+        copy(self, "components/*", src=self.recipe_folder, dst=self.export_sources_folder)
+        copy(self, "core/*", src=self.recipe_folder, dst=self.export_sources_folder)
+        copy(self, "integration/*", src=self.recipe_folder, dst=self.export_sources_folder)
+        copy(self, "services/*", src=self.recipe_folder, dst=self.export_sources_folder)
+        copy(self, "LICENSE", src=self.recipe_folder, dst=self.export_sources_folder)
+        copy(self, "cmake/*", src=self.recipe_folder, dst=self.export_sources_folder)
 
-        try:
-            # Получаем списки файлов и директорий
-            items = os.listdir(directory)
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
 
-            files = [f for f in items if os.path.isfile(os.path.join(directory, f))]
-            dirs = [d for d in items if os.path.isdir(os.path.join(directory, d))]
-
-            # Печатаем файлы
-            if files:
-                self.output.info("  Файлы:")
-                for file in sorted(files):
-                    self.output.info(f"    - {file}")
-            else:
-                self.output.info("  Файлов нет")
-
-            # Печатаем директории
-            if dirs:
-                self.output.info("  Директории:")
-                for dir_name in sorted(dirs):
-                    self.output.info(f"    - {dir_name}")
-            else:
-                self.output.info("  Директорий нет")
-
-            # Рекурсивно обрабатываем поддиректории
-            for dir_name in sorted(dirs):
-                if dir_name not in ['.git', 'build', '__pycache__', 'venv']:  # Игнорируем некоторые директории
-                    self.output.info("\n")
-                    sub_dir = os.path.join(directory, dir_name)
-                    self.list_all_files(sub_dir)
-
-        except Exception as e:
-            self.output.error(f"Ошибка при чтении директории {directory}: {e}")
+    def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
 
     @property
     def _minimum_cpp_standard(self):
         return 17
 
-    def source(self):
-        # Вызываем функцию вывода файлов перед началом сборки
-        self.output.info("=== СПИСОК ВСЕХ ФАЙЛОВ В ПРОЕКТЕ ===")
-        self.list_all_files(os.getcwd())
-        self.output.info("=== КОНЕЦ СПИСКА ФАЙЛОВ ===")
-
     def layout(self):
-        cmake_layout(self)
+        cmake_layout(self, src_folder="src")
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.generate()
 
     def requirements(self):
         self.requires("boost/1.86.0@")
@@ -91,36 +68,23 @@ class Otterbrix(ConanFile):
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
     def build(self):
-        self.output.info("=== СПИСОК ВСЕХ ФАЙЛОВ В ПРОЕКТЕ ===")
-        self.list_all_files(os.getcwd())
-        self.output.info("=== КОНЕЦ СПИСКА ФАЙЛОВ ===")
-        # Проверяем наличие CMakeLists.txt перед началом сборки
-        if not os.path.exists("CMakeLists.txt"):
-            self.output.error("ОШИБКА: CMakeLists.txt не найден в текущей директории!")
-            # Поиск CMakeLists.txt в других директориях
-            found_cmakelist = False
-            for root, dirs, files in os.walk(os.getcwd()):
-                if "CMakeLists.txt" in files:
-                    rel_path = os.path.relpath(root, os.getcwd())
-                    self.output.info(f"CMakeLists.txt найден в: {rel_path}")
-                    found_cmakelist = True
-
-            if not found_cmakelist:
-                self.output.error("CMakeLists.txt не найден нигде в проекте!")
-
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
 
     def package(self):
-        self.copy("*.hpp", dst="include/otterbrix", src="integration/cpp")
-        self.copy("*.h", dst="include/otterbrix", src="integration/cpp")
-        self.copy("*.hpp", dst="include", src=".")
-        self.copy("*.h", dst="include", src=".")
-        self.copy("*.dll", dst="bin", keep_path=False)  # Windows shared library
-        self.copy("*.so", dst="lib", keep_path=False)  # Linux shared library
-        self.copy("*.dylib", dst="lib", keep_path=False)  # macOS shared library
-        self.copy("*.a", dst="lib", keep_path=False)  # Static library (if needed)
+        self.copy("LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        self.copy("*.hpp", dst="include/otterbrix", src=os.path.join(self.source_folder, "integration/cpp"))
+        self.copy("*.h", dst="include/otterbrix", src=os.path.join(self.source_folder, "integration/cpp"))
+        self.copy("*.hpp", dst="include", src=self.source_folder)
+        self.copy("*.h", dst="include", src=self.source_folder)
+        self.copy("*.dll", dst="bin", keep_path=False)
+        self.copy("*.so", dst="lib", keep_path=False)
+        self.copy("*.dylib", dst="lib", keep_path=False)
+        self.copy("*.a", dst="lib", keep_path=False)
+
+        cmake = CMake(self)
+        cmake.install()
 
     def package_info(self):
         self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
