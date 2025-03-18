@@ -1,0 +1,6 @@
+sources:
+  "1.0.0a9":
+    url: "https://github.com/duckstax/otterbrix/archive/1.0.0a9.tar.gz"
+    sha256: "817f0aa8416d3f1e6051167643cdcc3bf8bcc0f9e53c4185c7f6f7b9e228df56"
+
+patches:
