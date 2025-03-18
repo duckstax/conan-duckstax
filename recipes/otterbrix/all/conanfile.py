@@ -1,6 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
-import os
+from conans import tools
 
 
 class Otterbrix(ConanFile):
@@ -48,8 +48,9 @@ class Otterbrix(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure(source_folder=self.source_folder)
-        cmake.build()
+        with tools.chdir(self.source_folder):
+            cmake.configure()
+            cmake.build()
 
     def package(self):
         self.copy("*.hpp", dst="include/otterbrix", src="integration/cpp")
