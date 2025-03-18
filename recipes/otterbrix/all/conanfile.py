@@ -6,6 +6,7 @@ class Otterbrix(ConanFile):
     name = "otterbrix"
     license = "MIT"
     description = "Otterbrix: computation framework for Semi-structured data processing"
+    url = "https://github.com/duckstax/otterbrix"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}  # Enable shared/static options
     generators = "CMakeDeps", "CMakeToolchain"
