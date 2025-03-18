@@ -106,11 +106,3 @@ jobs:
             conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}
             ./create-and-upload-conan.sh
           fi
-
-      - name: Upload logs as artifact
-        if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: conan-logs-${{matrix.configuration.UBUNTU_VERSION}}
-          path: conan_operation.log
-          retention-days: 7
