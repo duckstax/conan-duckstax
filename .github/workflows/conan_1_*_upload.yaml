@@ -1,14 +1,26 @@
-#on: [push, pull_request]
-on: [push]
+name: Conan Package Build and Upload
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - master
+      - main
 
 jobs:
-  build:
+  build-and-upload:
+    name: Build and Upload Conan Packages
+
     strategy:
+      fail-fast: false
       matrix:
         configuration: [
-         # {"UBUNTU_VERSION":"18.04"},
-          {"UBUNTU_VERSION":"20.04"},
-        #  {"UBUNTU_VERSION":"22.04"},
+          {"UBUNTU_VERSION": "20.04"},
+          # Uncomment needed versions if required
+          # {"UBUNTU_VERSION": "18.04"},
+          # {"UBUNTU_VERSION": "22.04"},
         ]
 
     runs-on: ubuntu-latest
@@ -16,14 +28,17 @@ jobs:
       image: ubuntu:${{matrix.configuration.UBUNTU_VERSION}}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Install system dependencies
         run: |
           apt update
-          apt install -y  build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
+          apt install -y build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https git
 
-      - name: conan installation and configuration
+      - name: Set up Python and Conan
         run: |
           pip install conan==1.64.1 cmake
           conan user
@@ -33,15 +48,69 @@ jobs:
           conan config set general.cpu_count=$(nproc)
           conan remote add duckstax http://conan.duckstax.com
 
-      - name: recipes-create
+      - name: Check changes in packages
+        id: changes
         run: |
-          chmod 777 recipes-create.sh
-          ./recipes-create.sh
+          # Determine which packages were changed since the last commit
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PR, compare with base branch
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }})
+          else
+            # For push, compare with previous commit
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          fi
 
-      - name: update-remote
-        #if: ${{ github.ref_name == 'master' }}
+          # Create req-seq.txt from changed packages
+          touch req-seq.txt
+
+          for file in $CHANGED_FILES; do
+            if [[ $file == recipes/* ]]; then
+              # Extract package name from path (assuming structure recipes/{package_name}/*)
+              PACKAGE_NAME=$(echo $file | cut -d'/' -f2)
+
+              # Find package version in conanfile.py
+              PACKAGE_DIR=$(find recipes/$PACKAGE_NAME -name conanfile.py -type f | head -n 1 | xargs dirname)
+              if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
+                VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' $PACKAGE_DIR/conanfile.py || echo "")
+
+                if [ -n "$VERSION" ]; then
+                  echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
+                fi
+              fi
+            fi
+          done
+
+          # Remove duplicates
+          sort -u req-seq.txt -o req-seq.txt
+
+          # Check if there are packages to build
+          if [ -s req-seq.txt ]; then
+            echo "PACKAGES_TO_BUILD=true" >> $GITHUB_ENV
+            echo "Found packages to build:"
+            cat req-seq.txt
+          else
+            echo "PACKAGES_TO_BUILD=false" >> $GITHUB_ENV
+            echo "No packages to build"
+          fi
+
+      - name: Create and upload packages
+        if: env.PACKAGES_TO_BUILD == 'true'
         run: |
-          conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax  -p ${{ secrets.CONAN_PASSWORD }}
-          chmod 777 update-remote.sh
-          conan upload "*" --confirm  -r duckstax --all
-          ./update-remote.sh
+          chmod +x create-and-upload-conan.sh
+
+          # Build only without upload (for PR or non-master branches)
+          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.ref }}" != "refs/heads/master" ]; then
+            ./create-and-upload-conan.sh --no-upload
+          else
+            # For master branch: authenticate and perform full build and upload cycle
+            conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}
+            ./create-and-upload-conan.sh
+          fi
+
+      - name: Upload logs as artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: conan-logs-${{matrix.configuration.UBUNTU_VERSION}}
+          path: conan_operation.log
+          retention-days: 7
