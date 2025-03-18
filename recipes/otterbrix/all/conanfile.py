@@ -1,6 +1,4 @@
-from conan import ConanFile
-from conan.tools.cmake import CMake, cmake_layout
-from conans import tools
+from conans import ConanFile, CMake, tools
 
 
 class Otterbrix(ConanFile):
@@ -12,10 +10,7 @@ class Otterbrix(ConanFile):
     license = "MIT"
     exports = ["LICENSE.md"]
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False]}  # Enable shared/static options
-    generators = "CMakeDeps", "CMakeToolchain"
-    exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
-
+    options = {"shared": [True, False]}
     default_options = {
         "shared": True,
         "actor-zeta:cxx_standard": 17,
@@ -23,13 +18,11 @@ class Otterbrix(ConanFile):
         "actor-zeta:exceptions_disable": False,
         "actor-zeta:rtti_disable": False,
     }
+    generators = "cmake", "cmake_find_package"
+    exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
 
-    @property
     def _minimum_cpp_standard(self):
         return 17
-
-    def layout(self):
-        cmake_layout(self)
 
     def requirements(self):
         self.requires("boost/1.86.0@")
@@ -48,9 +41,23 @@ class Otterbrix(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        with tools.chdir(self.source_folder):
-            cmake.configure()
-            cmake.build()
+        self.output.info(f"Source folder: {self.source_folder}")
+        self.output.info(f"Build folder: {self.build_folder}")
+        if not tools.os.path_exists(os.path.join(self.source_folder, "CMakeLists.txt")):
+            raise Exception(f"CMakeLists.txt not found in {self.source_folder}")
+
+        cmake.configure(source_dir=self.source_folder)
+        cmake.build()
+
+        # 2: tools.chdir
+        # with tools.chdir(self.source_folder):
+        #     cmake.configure()
+        #     cmake.build()
+
+        # 3:
+        # with tools.chdir(self.source_folder):
+        #     self.run('cmake . -DCMAKE_BUILD_TYPE={0}'.format(self.settings.build_type))
+        #     self.run('cmake --build .')
 
     def package(self):
         self.copy("*.hpp", dst="include/otterbrix", src="integration/cpp")
