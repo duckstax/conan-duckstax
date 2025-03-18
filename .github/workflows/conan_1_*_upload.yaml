@@ -40,10 +40,10 @@ jobs:
           # Additional dependencies that might be needed for otterbrix
           # apt install -y cmake libssl-dev zlib1g-dev libboost-all-dev
 
-      - name: Diagnostic info
-        run: |
-          cmake --version
-          gcc --version
+      #- name: Diagnostic info
+      #  run: |
+     #     cmake --version
+      #    gcc --version
       #    echo "System libraries:"
       #    ldconfig -p | grep -E 'ssl|boost|z' || echo "No matching libraries found"
       #    echo "System directories:"
