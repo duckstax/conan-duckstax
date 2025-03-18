@@ -1,4 +1,4 @@
-from conans import ConanFile, tools
+from conans import ConanFile, CMake, tools
 import os
 
 
@@ -32,12 +32,14 @@ class OtterbrixRecipe(ConanFile):
         if not os.path.exists(toolchain_path):
             raise Exception("conan_toolchain.cmake not found")
 
-        cmake = tools.CMake(self)
+        # Используем CMake с toolchain
+        cmake = CMake(self)
+        cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = toolchain_path
         cmake.configure()
         cmake.build()
 
     def package(self):
-        cmake = tools.CMake(self)
+        cmake = CMake(self)
         cmake.install()
 
     def package_info(self):
