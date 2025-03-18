@@ -11,7 +11,6 @@ class OtterbrixConan(ConanFile):
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
 
-    # Conan settings
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = {
@@ -22,15 +21,11 @@ class OtterbrixConan(ConanFile):
         "actor-zeta:rtti_disable": False,
     }
 
-    # Generate toolchain and dependencies files
     generators = "CMakeToolchain", "CMakeDeps"
-
-    # Source files to export
     exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
-    exports = ["LICENSE.md"]
 
     def layout(self):
-        cmake_layout(self)
+        cmake_layout(self, src_folder=".")
 
     def requirements(self):
         self.requires("boost/1.86.0")
@@ -49,7 +44,7 @@ class OtterbrixConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure()
+        cmake.configure(source_folder=self.source_folder)
         cmake.build()
 
     def package(self):
