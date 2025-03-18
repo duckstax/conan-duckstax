@@ -51,34 +51,42 @@ jobs:
       - name: Check changes in packages
         id: changes
         run: |
-          # Determine which packages were changed since the last commit
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            # For PR, compare with base branch
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }})
-          else
-            # For push, compare with previous commit
-            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
-          fi
-
-          # Create req-seq.txt from changed packages
+          # Create req-seq.txt file
           touch req-seq.txt
 
-          for file in $CHANGED_FILES; do
-            if [[ $file == recipes/* ]]; then
-              # Extract package name from path (assuming structure recipes/{package_name}/*)
-              PACKAGE_NAME=$(echo $file | cut -d'/' -f2)
-
-              # Find package version in conanfile.py
-              PACKAGE_DIR=$(find recipes/$PACKAGE_NAME -name conanfile.py -type f | head -n 1 | xargs dirname)
-              if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
-                VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' $PACKAGE_DIR/conanfile.py || echo "")
-
-                if [ -n "$VERSION" ]; then
-                  echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
+          # Determine which packages were changed
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # For PR, try to compare with base branch if possible
+            echo "Processing Pull Request"
+            # Fallback to scanning all recipe directories if we can't get changed files
+            for dir in recipes/*/; do
+              if [ -d "$dir" ]; then
+                PACKAGE_NAME=$(basename "$dir")
+                PACKAGE_DIR=$(find "$dir" -name conanfile.py -type f | head -n 1 | xargs dirname)
+                if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
+                  VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' "$PACKAGE_DIR/conanfile.py" || echo "")
+                  if [ -n "$VERSION" ]; then
+                    echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
+                  fi
                 fi
               fi
-            fi
-          done
+            done
+          else
+            # For push, scan modified recipe directories
+            echo "Processing Push event"
+            for dir in recipes/*/; do
+              if [ -d "$dir" ]; then
+                PACKAGE_NAME=$(basename "$dir")
+                PACKAGE_DIR=$(find "$dir" -name conanfile.py -type f | head -n 1 | xargs dirname)
+                if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
+                  VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' "$PACKAGE_DIR/conanfile.py" || echo "")
+                  if [ -n "$VERSION" ]; then
+                    echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
+                  fi
+                fi
+              fi
+            done
+          fi
 
           # Remove duplicates
           sort -u req-seq.txt -o req-seq.txt
@@ -98,11 +106,16 @@ jobs:
         run: |
           chmod +x create-and-upload-conan.sh
 
-          # Build only without upload (for PR or non-master branches)
-          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.ref }}" != "refs/heads/master" ]; then
+          # For PR or non-master branches: build only without upload
+          IS_PR="${{ github.event_name == 'pull_request' }}"
+          IS_MASTER="${{ github.ref == 'refs/heads/master' }}"
+
+          if [ "$IS_PR" = "true" ] || [ "$IS_MASTER" = "false" ]; then
+            echo "Build only mode (no upload)"
             ./create-and-upload-conan.sh --no-upload
           else
             # For master branch: authenticate and perform full build and upload cycle
+            echo "Build and upload mode"
             conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}
             ./create-and-upload-conan.sh
           fi
