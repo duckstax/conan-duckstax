@@ -4,7 +4,7 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
 
 class Otterbrix(ConanFile):
-    name = "cpp_otterbrix"
+    name = "otterbrix"
     version = "1.0"
     description = "otterbrix is an open-source framework for developing conventional and analytical applications."
     url = "https://github.com/duckstax/otterbrix"
