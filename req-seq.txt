@@ -15,3 +15,5 @@ magic_enum/0.8.1
 actor-zeta/1.0.0a7
 actor-zeta/1.0.0a8
 actor-zeta/1.0.0a9
+
+otterbrix/1.0.0a9
