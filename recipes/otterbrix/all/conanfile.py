@@ -4,12 +4,14 @@ import os
 
 class OtterbrixRecipe(ConanFile):
     name = "otterbrix"
+    version = "1.0.0a10-rc"
     description = "otterbrix is an open-source framework for developing conventional and analytical applications."
     license = "MIT"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = {"shared": True}
-    generators = "cmake"
+    # Используем все возможные генераторы для Conan v1
+    generators = "cmake", "cmake_find_package", "cmake_paths", "cmake_multi"
     exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
 
     def requirements(self):
@@ -43,14 +45,38 @@ class OtterbrixRecipe(ConanFile):
                 self.output.info(f"Found toolchain file at: {path}")
                 break
 
-        # Если toolchain не найден, завершаем с ошибкой
+        # Если toolchain не найден, ищем другие подходящие файлы
         if not toolchain_path:
-            self.output.error("conan_toolchain.cmake not found!")
-            raise Exception("conan_toolchain.cmake is required for building otterbrix")
+            alternative_files = [
+                os.path.join(self.build_folder, "conanbuildinfo.cmake"),
+                os.path.join(self.build_folder, "conan_paths.cmake")
+            ]
 
-        # Запускаем CMake с указанием toolchain файла
+            for alt_file in alternative_files:
+                if os.path.exists(alt_file):
+                    self.output.info(f"Found alternative cmake file: {alt_file}")
+                    toolchain_path = alt_file
+                    break
+
+        # Если ни один файл не найден, завершаем с ошибкой
+        if not toolchain_path:
+            self.output.error("No suitable CMake configuration file found!")
+            raise Exception("A CMake configuration file is required for building otterbrix")
+
+        # Запускаем CMake с указанием найденного файла
         cmake = CMake(self)
-        cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = toolchain_path
+
+        if "toolchain" in toolchain_path:
+            cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = toolchain_path
+        elif "buildinfo" in toolchain_path:
+            # Для файла conanbuildinfo.cmake используем другой подход
+            self.output.info("Using conanbuildinfo.cmake approach")
+            cmake.definitions["CMAKE_PROJECT_otterbrix_INCLUDE"] = toolchain_path
+        elif "paths" in toolchain_path:
+            # Для файла conan_paths.cmake используем другой подход
+            self.output.info("Using conan_paths.cmake approach")
+            cmake.definitions["CMAKE_PREFIX_PATH"] = os.path.dirname(toolchain_path)
+
         cmake.configure()
         cmake.build()
 
