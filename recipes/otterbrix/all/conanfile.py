@@ -91,6 +91,9 @@ class Otterbrix(ConanFile):
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
     def build(self):
+        self.output.info("=== СПИСОК ВСЕХ ФАЙЛОВ В ПРОЕКТЕ ===")
+        self.list_all_files(os.getcwd())
+        self.output.info("=== КОНЕЦ СПИСКА ФАЙЛОВ ===")
         # Проверяем наличие CMakeLists.txt перед началом сборки
         if not os.path.exists("CMakeLists.txt"):
             self.output.error("ОШИБКА: CMakeLists.txt не найден в текущей директории!")
