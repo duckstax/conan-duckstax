@@ -1,17 +1,15 @@
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, tools
 import os
 
 
 class OtterbrixRecipe(ConanFile):
     name = "otterbrix"
     version = "1.0.0a10-rc"
-    description = "otterbrix is an open-source framework for developing conventional and analytical applications."
     license = "MIT"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = {"shared": True}
-    # Используем все возможные генераторы для Conan v1
-    generators = "cmake", "cmake_find_package", "cmake_paths", "cmake_multi"
+    generators = "CMakeToolchain", "cmake", "cmake_find_package", "cmake_paths"
     exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
 
     def requirements(self):
@@ -30,76 +28,19 @@ class OtterbrixRecipe(ConanFile):
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
     def build(self):
-        # Ищем готовый conan_toolchain.cmake
-        toolchain_path = None
-        possible_paths = [
-            os.path.join(self.build_folder, "conan_toolchain.cmake"),
-            os.path.join(self.build_folder, "generators", "conan_toolchain.cmake"),
-            os.path.join(self.source_folder, "conan_toolchain.cmake"),
-            "conan_toolchain.cmake"
-        ]
+        toolchain_path = os.path.join(self.build_folder, "conan_toolchain.cmake")
+        if not os.path.exists(toolchain_path):
+            raise Exception("conan_toolchain.cmake not found")
 
-        for path in possible_paths:
-            if os.path.exists(path):
-                toolchain_path = path
-                self.output.info(f"Found toolchain file at: {path}")
-                break
-
-        # Если toolchain не найден, ищем другие подходящие файлы
-        if not toolchain_path:
-            alternative_files = [
-                os.path.join(self.build_folder, "conanbuildinfo.cmake"),
-                os.path.join(self.build_folder, "conan_paths.cmake")
-            ]
-
-            for alt_file in alternative_files:
-                if os.path.exists(alt_file):
-                    self.output.info(f"Found alternative cmake file: {alt_file}")
-                    toolchain_path = alt_file
-                    break
-
-        # Если ни один файл не найден, завершаем с ошибкой
-        if not toolchain_path:
-            self.output.error("No suitable CMake configuration file found!")
-            raise Exception("A CMake configuration file is required for building otterbrix")
-
-        # Запускаем CMake с указанием найденного файла
-        cmake = CMake(self)
-
-        if "toolchain" in toolchain_path:
-            cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = toolchain_path
-        elif "buildinfo" in toolchain_path:
-            # Для файла conanbuildinfo.cmake используем другой подход
-            self.output.info("Using conanbuildinfo.cmake approach")
-            cmake.definitions["CMAKE_PROJECT_otterbrix_INCLUDE"] = toolchain_path
-        elif "paths" in toolchain_path:
-            # Для файла conan_paths.cmake используем другой подход
-            self.output.info("Using conan_paths.cmake approach")
-            cmake.definitions["CMAKE_PREFIX_PATH"] = os.path.dirname(toolchain_path)
-
+        cmake = tools.CMake(self)
         cmake.configure()
         cmake.build()
 
     def package(self):
-        cmake = CMake(self)
+        cmake = tools.CMake(self)
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
-        # Добавляем компоненты
-        components = ["otterbrix_document", "otterbrix_types", "otterbrix_cursor",
-                      "otterbrix_session", "otterbrix_expressions", "otterbrix_logical_plan"]
-
-        for comp in components:
-            self.cpp_info.components["cpp_otterbrix"].requires.append(comp)
-            self.cpp_info.components[comp].libs = [comp]
-
-        # Добавляем внешние зависимости
-        ext_deps = ["boost::boost", "abseil::abseil", "actor-zeta::actor-zeta",
-                    "magic_enum::magic_enum", "msgpack-cxx::msgpack-cxx", "fmt::fmt",
-                    "spdlog::spdlog", "crc32c::crc32c", "zlib::zlib", "bzip2::bzip2"]
-
-        for dep in ext_deps:
-            self.cpp_info.components["cpp_otterbrix"].requires.append(dep)
-
-        self.cpp_info.includedirs = ["include"]
+        self.cpp_info.libs = ["otterbrix_document", "otterbrix_types", "otterbrix_cursor",
+                              "otterbrix_session", "otterbrix_expressions", "otterbrix_logical_plan",
+                              "cpp_otterbrix"]
