@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Строгий режим выполнения: скрипт завершится при любой ошибке
-set -e  # Остановка выполнения при любой ошибке
-set -o pipefail  # Если команда в конвейере возвращает ошибку, весь конвейер завершается с этой ошибкой
+set -e
+set -o pipefail
 
 # -- variables --
 CONAN_REMOTE="duckstax"
@@ -63,7 +62,6 @@ log() {
     local message="$2"
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
-    # Всегда выводим все сообщения, включая DEBUG
     echo -e "[$timestamp] [${level}] $message" | tee -a "$LOG_FILE"
 }
 
@@ -89,7 +87,6 @@ check_conan() {
         log "INFO" "Using Conan version $version"
     fi
 
-    # Debug: Показать профили Conan
     if [ "$DEBUG_MODE" = "true" ]; then
         log "DEBUG" "Available Conan profiles:"
         conan profile list
@@ -176,7 +173,6 @@ check_toolchain_files() {
 
     log "DEBUG" "Checking for toolchain files $stage build for $package_name/$package_version"
 
-    # Возможные пути к директории сборки
     local build_dirs=(
         "$HOME/.conan/data/$package_name/$package_version/$USER/$CHANNEL/build"
         "/github/home/.conan/data/$package_name/$package_version/$USER/$CHANNEL/build"
@@ -187,7 +183,6 @@ check_toolchain_files() {
         if [ -d "$dir" ]; then
             log "DEBUG" "Found build directory: $dir"
 
-            # Найти все папки с билдами
             find "$dir" -type d | while read -r build_dir; do
                 # Проверить toolchain файлы
                 local toolchain_files=$(find "$build_dir" -name "conan_toolchain.cmake" 2>/dev/null)
@@ -195,7 +190,6 @@ check_toolchain_files() {
                     echo "$toolchain_files" | while read -r toolchain; do
                         log "DEBUG" "Found toolchain file: $toolchain"
 
-                        # Проверить содержимое toolchain файла
                         log "DEBUG" "Toolchain file content (first 15 lines):"
                         head -n 15 "$toolchain" | while read -r line; do
                             log "DEBUG" "  $line"
@@ -210,7 +204,6 @@ check_toolchain_files() {
                     log "DEBUG" "No toolchain files found in $build_dir"
                 fi
 
-                # Проверить CMake логи
                 local cmake_error_log=$(find "$build_dir" -name "CMakeError.log" 2>/dev/null | head -n 1)
                 if [ -n "$cmake_error_log" ]; then
                     log "DEBUG" "Found CMake error log: $cmake_error_log"
@@ -230,7 +223,7 @@ create_package() {
 
     if [ -z "$package" ]; then
         log "ERROR" "Empty package name passed"
-        exit 1  # Завершаем скрипт с ошибкой
+        exit 1
     fi
 
     local package_name=${package%/*}
@@ -242,32 +235,27 @@ create_package() {
     # Check if recipe directory exists
     if [ ! -d "recipes/$package_name" ]; then
         log "ERROR" "Directory recipes/$package_name not found"
-        exit 1  # Завершаем скрипт с ошибкой
+        exit 1
     fi
 
-    # Проверка toolchain файлов до сборки
     if [ "$DEBUG_MODE" = "true" ]; then
         check_toolchain_files "$package_name" "$package_version" "before"
     fi
-
-    # Устанавливаем переменные окружения для отладки, если нужно
     local env_vars=""
     if [ "$DEBUG_MODE" = "true" ]; then
         env_vars="CONAN_LOGGING_LEVEL=debug CONAN_CMAKE_VERBOSE_MAKEFILE=1"
     fi
 
-    # Запускаем сборку и явно выходим с ошибкой при любом сбое
     log "INFO" "Running: $env_vars conan create \"recipes/$package_name\"/*/  \"$package_ref\" --build missing -pr:b=$BUILD_PROFILE"
     if ! eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE; then
         log "ERROR" "Failed to create package $package_ref"
 
-        # Если это otterbrix, выполняем дополнительную диагностику
         if [[ "$package_name" == "otterbrix" ]] && [ "$DEBUG_MODE" = "true" ]; then
             log "DEBUG" "Special debugging for otterbrix package"
             check_toolchain_files "$package_name" "$package_version" "after"
         fi
 
-        exit 1  # Завершаем скрипт с ошибкой
+        exit 1
     fi
 
     log "SUCCESS" "Package $package_ref successfully created"
@@ -280,7 +268,7 @@ upload_package() {
 
     if [ -z "$package" ]; then
         log "ERROR" "Empty package name passed"
-        exit 1  # Завершаем скрипт с ошибкой
+        exit 1
     fi
 
     local package_ref="${package}@${USER}/${CHANNEL}"
@@ -290,14 +278,13 @@ upload_package() {
     # Upload package
     if ! conan upload "$package_ref" -r "$CONAN_REMOTE" --all --confirm; then
         log "ERROR" "Failed to upload package $package_ref"
-        exit 1  # Завершаем скрипт с ошибкой
+        exit 1
     fi
 
     log "SUCCESS" "Package $package_ref successfully uploaded"
     return 0
 }
 
-# Check results - упрощенная проверка, так как при ошибке скрипт уже завершится
 check_results() {
     local total_count=$(wc -l < "$RESULT_FILE")
 
@@ -340,10 +327,8 @@ main() {
     for package in $(cat "$RESULT_FILE"); do
         echo -e "${YELLOW}Processing package: $package${RESET}"
 
-        # Создаем пакет (функция завершит скрипт при ошибке)
         create_package "$package"
 
-        # Загружаем пакет, если требуется (функция завершит скрипт при ошибке)
         if $UPLOAD_PACKAGES; then
             upload_package "$package"
             echo -e "${GREEN}Package $package successfully created and uploaded${RESET}"

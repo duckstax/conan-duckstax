@@ -13,7 +13,6 @@ class Otterbrix(ConanFile):
     exports = ["LICENSE.md"]
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}  # Enable shared/static options
-    #exports_sources = "CMakeLists.txt", "components/*", "core/*", "integration/*", "services/*", "LICENSE", "cmake/*"
 
     default_options = {
         "shared": True,
@@ -25,7 +24,6 @@ class Otterbrix(ConanFile):
 
     def requirements(self):
         self.requires("boost/1.86.0@")
-        self.requires("fmt/10.2.1@")
         self.requires("spdlog/1.12.0@")
         self.requires("pybind11/2.10.0@")
         self.requires("msgpack-cxx/4.1.1@")
@@ -33,8 +31,6 @@ class Otterbrix(ConanFile):
         self.requires("crc32c/1.1.2@")
         self.requires("abseil/20230802.1@")
         self.requires("benchmark/1.6.1@")
-        self.requires("zlib/1.2.12@")
-        self.requires("bzip2/1.0.8@")
         self.requires("magic_enum/0.8.1@")
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
