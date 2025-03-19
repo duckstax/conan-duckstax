@@ -276,7 +276,7 @@ upload_package() {
     log "INFO" "Uploading package $package_ref to repository $CONAN_REMOTE"
 
     # Upload package
-    if ! conan upload "$package_ref" -r "$CONAN_REMOTE" --all --confirm; then
+    if ! conan upload "$package_ref" -r "$CONAN_REMOTE" --all --force --confirm; then
         log "ERROR" "Failed to upload package $package_ref"
         exit 1
     fi

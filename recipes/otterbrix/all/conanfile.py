@@ -32,6 +32,8 @@ class Otterbrix(ConanFile):
         self.requires("crc32c/1.1.2@")
         self.requires("abseil/20230802.1@")
         self.requires("benchmark/1.6.1@")
+        self.requires("zlib/1.3.1@")
+        self.requires("bzip2/1.0.8@")
         self.requires("magic_enum/0.8.1@")
         self.requires("actor-zeta/1.0.0a11@duckstax/stable")
 
