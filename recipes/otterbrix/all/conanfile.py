@@ -24,6 +24,7 @@ class Otterbrix(ConanFile):
 
     def requirements(self):
         self.requires("boost/1.86.0@")
+        self.requires("fmt/10.2.1@")
         self.requires("spdlog/1.12.0@")
         self.requires("pybind11/2.10.0@")
         self.requires("msgpack-cxx/4.1.1@")
