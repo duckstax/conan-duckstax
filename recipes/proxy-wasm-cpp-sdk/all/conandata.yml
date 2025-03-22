@@ -1,8 +1,0 @@
-sources:
-  c32d380ca6c9b1afac38a3841be99c37af2698bf:
-    url: "https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/c32d380ca6c9b1afac38a3841be99c37af2698bf.zip"
-    sha256: "4f2bf903533d0cf0164a01a76273b9209bf66525ac29d6894bd6b1621dd9a665"
-files:
-  c32d380ca6c9b1afac38a3841be99c37af2698bf:
-    - src: files/.bazelrc
-      dst: source_subfolder

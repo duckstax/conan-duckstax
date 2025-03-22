@@ -1,47 +1,76 @@
-#on: [push, pull_request]
-on: [push]
+name: Conan Package Build and Upload
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - master
+      - main
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        configuration: [
-         # {"UBUNTU_VERSION":"18.04"},
-          {"UBUNTU_VERSION":"20.04"},
-        #  {"UBUNTU_VERSION":"22.04"},
-        ]
-
+  build-and-upload:
+    name: Build and Upload Conan Packages
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:${{matrix.configuration.UBUNTU_VERSION}}
+      image: ubuntu:20.04
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
           apt update
           apt install -y  build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
 
-      - name: conan installation and configuration
+      - name: Set up Conan
         run: |
-          pip install conan==1.64.1 cmake
+          pip install conan==1.66.0 cmake
           conan user
           conan profile new default --detect --force
           conan profile update settings.compiler.libcxx=libstdc++11 default
-          conan config set general.parallel_download=$(nproc)
-          conan config set general.cpu_count=$(nproc)
           conan remote add duckstax http://conan.duckstax.com
 
-      - name: recipes-create
+      - name: Prepare package list
         run: |
-          chmod 777 recipes-create.sh
-          ./recipes-create.sh
+          # Create req-seq.txt with all packages
+          touch req-seq.txt
+          for dir in recipes/*/; do
+            if [ -d "$dir" ]; then
+              PACKAGE_NAME=$(basename "$dir")
+              PACKAGE_DIR=$(find "$dir" -name conanfile.py -type f | head -n 1 | xargs dirname)
+              if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
+                VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' "$PACKAGE_DIR/conanfile.py" || echo "")
+                if [ -n "$VERSION" ]; then
+                  echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
+                fi
+              fi
+            fi
+          done
 
-      - name: update-remote
-        #if: ${{ github.ref_name == 'master' }}
+          # Remove duplicates
+          sort -u req-seq.txt -o req-seq.txt
+
+          # Check if there are packages to build
+          if [ -s req-seq.txt ]; then
+            echo "Found packages to build:"
+            cat req-seq.txt
+          else
+            echo "No packages to build"
+            exit 0
+          fi
+
+      - name: Build packages
         run: |
-          conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax  -p ${{ secrets.CONAN_PASSWORD }}
-          chmod 777 update-remote.sh
-          conan upload "*" --confirm  -r duckstax --all
-          ./update-remote.sh
+          chmod +x create-and-upload-conan.sh
+
+          IS_PR="${{ github.event_name == 'pull_request' }}"
+          IS_MASTER="${{ github.ref == 'refs/heads/master' }}"
+
+            echo "Build and upload mode"
+            conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}
+            ./create-and-upload-conan.sh --profile=default
