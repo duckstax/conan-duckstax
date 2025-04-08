@@ -1,8 +1,0 @@
-sources:
-  2788d71e823b522b178db3b3660ce93689534e6d:
-    url: "https://github.com/bellard/quickjs/archive/2788d71e823b522b178db3b3660ce93689534e6d.zip"
-    sha256: "66a2ee28b630be55e66bcd1f3d2b47eb26a3eb7dd2669d440cbfd62dd5c381c3"
-patches:
-  2788d71e823b522b178db3b3660ce93689534e6d:
-    - patch_file: patches/0001-Hack-for-Emscripten.patch
-      base_path: source_subfolder
