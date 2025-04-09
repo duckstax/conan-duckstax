@@ -235,9 +235,8 @@ create_package() {
 
     local package_name=${package%/*}
     local package_version=${package#*/}
-    local package_ref="${package_name}/${package_version}"
 
-    log "INFO" "Creating package $package_ref with build profile $BUILD_PROFILE"
+    log "INFO" "Creating package $package_name/$package_version with build profile $BUILD_PROFILE"
 
     # Check if recipe directory exists
     if [ ! -d "recipes/$package_name" ]; then
@@ -254,13 +253,10 @@ create_package() {
         env_vars="CONAN_LOGGING_LEVEL=debug CONAN_CMAKE_VERBOSE_MAKEFILE=1"
     fi
 
-    # Key changes for Conan 2.x:
-    # 1. Remove @user/channel from reference
-    # 2. Use --build=missing instead of --build missing
-    # 3. Profile specification is now slightly different
-    log "INFO" "Running: $env_vars conan create \"recipes/$package_name\"/*/  \"$package_ref\" --build=missing -pr:b=\"$BUILD_PROFILE\""
-    if ! eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build=missing -pr:b="$BUILD_PROFILE"; then
-        log "ERROR" "Failed to create package $package_ref"
+    log "INFO" "Running: $env_vars conan create \"recipes/$package_name\"/*/ --name \"$package_name\" --version \"$package_version\" --build=missing -pr:b=\"$BUILD_PROFILE\""
+
+    if ! eval $env_vars conan create "recipes/$package_name"/*/ --name "$package_name" --version "$package_version" --build=missing -pr:b="$BUILD_PROFILE"; then
+        log "ERROR" "Failed to create package $package_name/$package_version"
 
         if [[ "$package_name" == "otterbrix" ]] && [ "$DEBUG_MODE" = "true" ]; then
             log "DEBUG" "Special debugging for otterbrix package"
@@ -270,7 +266,7 @@ create_package() {
         exit 1
     fi
 
-    log "SUCCESS" "Package $package_ref successfully created"
+    log "SUCCESS" "Package $package_name/$package_version successfully created"
     return 0
 }
 
@@ -285,27 +281,22 @@ upload_package() {
 
     local package_name=${package%/*}
     local package_version=${package#*/}
-    local package_ref="${package_name}/${package_version}"
 
-    log "INFO" "Uploading package $package_ref to repository $CONAN_REMOTE"
+    log "INFO" "Uploading package $package_name/$package_version to repository $CONAN_REMOTE"
 
-    # Key changes for Conan 2.x:
-    # 1. Remove @user/channel from reference
-    # 2. Use --all is simplified
-    # 3. Add optional force upload
-    local upload_cmd="conan upload \"$package_ref\" -r \"$CONAN_REMOTE\" --all --confirm"
+    local upload_cmd="conan upload \"$package_name/$package_version\" -r \"$CONAN_REMOTE\" --all --confirm"
 
     if [ "$FORCE_UPLOAD" = "true" ]; then
         upload_cmd+=" --force"
-        log "INFO" "Force upload enabled for package $package_ref"
+        log "INFO" "Force upload enabled for package $package_name/$package_version"
     fi
 
     if ! eval "$upload_cmd"; then
-        log "ERROR" "Failed to upload package $package_ref"
+        log "ERROR" "Failed to upload package $package_name/$package_version"
         exit 1
     fi
 
-    log "SUCCESS" "Package $package_ref successfully uploaded"
+    log "SUCCESS" "Package $package_name/$package_version successfully uploaded"
     return 0
 }
 
