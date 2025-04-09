@@ -28,7 +28,8 @@ class ActorZetaConan(ConanFile):
         "fPIC": False,
         "exceptions_disable": False,
         "rtti_disable": False,
-        "cxx_standard": 11
+        "cxx_standard": 11,
+        "CONAN_EXPORTED": True
     }
 
     def export_sources(self):
