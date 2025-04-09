@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, export_conandata_patches, get, copy
+from conan.tools.files import collect_libs
 import os
 
 
@@ -77,7 +78,7 @@ class ActorZetaConan(ConanFile):
         copy(self, "*.dylib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
     def package_info(self):
-        self.cpp_info.libs = self.collect_libs()
+        self.cpp_info.libs = collect_libs(self)
 
         if self.settings.os == "Linux":
             self.cpp_info.system_libs.append("pthread")
