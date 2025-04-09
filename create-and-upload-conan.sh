@@ -4,7 +4,7 @@ set -e
 set -o pipefail
 
 # -- variables --
-CONAN_REMOTE="duckstax"
+CONAN_REMOTE="otterbrix"
 RESULT_FILE="result.txt"
 TMP_FILE="tmp.txt"
 REQ_SEQ_FILE="req-seq.txt"
