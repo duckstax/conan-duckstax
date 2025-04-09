@@ -284,7 +284,8 @@ upload_package() {
 
     log "INFO" "Uploading package $package_name/$package_version to repository $CONAN_REMOTE"
 
-    local upload_cmd="conan upload \"$package_name/$package_version\" -r \"$CONAN_REMOTE\" --all --confirm"
+    # Updated command for Conan v2
+    local upload_cmd="conan upload \"$package_name/$package_version\" -r \"$CONAN_REMOTE\" --confirm"
 
     if [ "$FORCE_UPLOAD" = "true" ]; then
         upload_cmd+=" --force"
