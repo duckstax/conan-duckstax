@@ -21,7 +21,6 @@ class ActorZetaConan(ConanFile):
         "exceptions_disable": [True, False],
         "rtti_disable": [True, False],
         "cxx_standard": [11, 14, 17],
-        "CONAN_EXPORTED": [True, False]
     }
 
     default_options = {
@@ -30,7 +29,6 @@ class ActorZetaConan(ConanFile):
         "exceptions_disable": False,
         "rtti_disable": False,
         "cxx_standard": 11,
-        "CONAN_EXPORTED": True
     }
 
     def export_sources(self):
