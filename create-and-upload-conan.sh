@@ -18,6 +18,8 @@ BUILD_PROFILE="default"  # Default build profile
 DEBUG_MODE=false  # Debug mode flag
 
 # Command line arguments processing
+FORCE_UPLOAD=true  # По умолчанию включена принудительная загрузка
+
 for arg in "$@"; do
     case $arg in
         --no-upload)
@@ -32,13 +34,18 @@ for arg in "$@"; do
             DEBUG_MODE=true
             shift
             ;;
+        --no-force-upload)
+            FORCE_UPLOAD=false
+            shift
+            ;;
         --help)
             echo "Usage: $0 [options]"
             echo "Options:"
-            echo "  --no-upload       Create packages only without uploading to remote"
-            echo "  --profile=NAME    Specify build profile (default: default)"
-            echo "  --debug           Enable debug mode with verbose output"
-            echo "  --help            Show this help message"
+            echo "  --no-upload           Create packages only without uploading to remote"
+            echo "  --profile=NAME        Specify build profile (default: default)"
+            echo "  --debug               Enable debug mode with verbose output"
+            echo "  --no-force-upload     Disable force upload (do not overwrite existing packages)"
+            echo "  --help                Show this help message"
             exit 0
             ;;
         *)
@@ -72,12 +79,12 @@ check_conan() {
         exit 1
     fi
 
-    # Check Conan version (should be v1.x)
+    # Check Conan version (should be v2.x)
     local version=$(conan --version | grep -oP '(?<=Conan version )[0-9]+\.[0-9]+\.[0-9]+')
     local major_version=$(echo $version | cut -d. -f1)
 
-    if [[ "$major_version" != "1" ]]; then
-        log "WARNING" "Detected Conan version $version. This script is intended for Conan v1.x"
+    if [[ "$major_version" != "2" ]]; then
+        log "WARNING" "Detected Conan version $version. This script is intended for Conan v2.x"
         read -p "Continue execution? (y/n): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -139,16 +146,13 @@ prepare_result_file() {
         exit 1
     fi
 
-    # Remove header line
-    sed -i '1d' "$TMP_FILE"
-
-    # Extract package names
+    # Remove header line and filter packages
     touch "$UPLOADED_PACKAGES"
-    while IFS= read -r str; do
-        if grep -q "/" <<< "$str"; then
+    tail -n +2 "$TMP_FILE" | while IFS= read -r str; do
+        if [[ "$str" =~ [^[:space:]] ]]; then
             echo "$str" >> "$UPLOADED_PACKAGES"
         fi
-    done < "$TMP_FILE"
+    done
 
     # Compare and create list of packages for upload
     if [ -s "$UPLOADED_PACKAGES" ]; then
@@ -174,46 +178,49 @@ check_toolchain_files() {
     log "DEBUG" "Checking for toolchain files $stage build for $package_name/$package_version"
 
     local build_dirs=(
-        "$HOME/.conan/data/$package_name/$package_version/$USER/$CHANNEL/build"
-        "/github/home/.conan/data/$package_name/$package_version/$USER/$CHANNEL/build"
-        ".conan/data/$package_name/$package_version/$USER/$CHANNEL/build"
+        "$HOME/.conan2/p/$package_name*/$package_version"
+        "/github/home/.conan2/p/$package_name*/$package_version"
+        ".conan2/p/$package_name*/$package_version"
     )
 
     for dir in "${build_dirs[@]}"; do
-        if [ -d "$dir" ]; then
-            log "DEBUG" "Found build directory: $dir"
+        # Use glob expansion to find matching directories
+        for expanded_dir in $dir; do
+            if [ -d "$expanded_dir" ]; then
+                log "DEBUG" "Found build directory: $expanded_dir"
 
-            find "$dir" -type d | while read -r build_dir; do
-                # Проверить toolchain файлы
-                local toolchain_files=$(find "$build_dir" -name "conan_toolchain.cmake" 2>/dev/null)
-                if [ -n "$toolchain_files" ]; then
-                    echo "$toolchain_files" | while read -r toolchain; do
-                        log "DEBUG" "Found toolchain file: $toolchain"
+                find "$expanded_dir" -type d | while read -r build_dir; do
+                    # Check toolchain files
+                    local toolchain_files=$(find "$build_dir" -name "conan_toolchain.cmake" 2>/dev/null)
+                    if [ -n "$toolchain_files" ]; then
+                        echo "$toolchain_files" | while read -r toolchain; do
+                            log "DEBUG" "Found toolchain file: $toolchain"
 
-                        log "DEBUG" "Toolchain file content (first 15 lines):"
-                        head -n 15 "$toolchain" | while read -r line; do
+                            log "DEBUG" "Toolchain file content (first 15 lines):"
+                            head -n 15 "$toolchain" | while read -r line; do
+                                log "DEBUG" "  $line"
+                            done
+
+                            log "DEBUG" "Checking critical settings in toolchain:"
+                            grep -i "CMAKE_CXX_COMPILER" "$toolchain" | log "DEBUG"
+                            grep -i "CMAKE_C_COMPILER" "$toolchain" | log "DEBUG"
+                            grep -i "CMAKE_BUILD_TYPE" "$toolchain" | log "DEBUG"
+                        done
+                    else
+                        log "DEBUG" "No toolchain files found in $build_dir"
+                    fi
+
+                    local cmake_error_log=$(find "$build_dir" -name "CMakeError.log" 2>/dev/null | head -n 1)
+                    if [ -n "$cmake_error_log" ]; then
+                        log "DEBUG" "Found CMake error log: $cmake_error_log"
+                        log "DEBUG" "CMake error log content (last 30 lines):"
+                        tail -n 30 "$cmake_error_log" | while read -r line; do
                             log "DEBUG" "  $line"
                         done
-
-                        log "DEBUG" "Checking critical settings in toolchain:"
-                        grep -i "CMAKE_CXX_COMPILER" "$toolchain" | log "DEBUG"
-                        grep -i "CMAKE_C_COMPILER" "$toolchain" | log "DEBUG"
-                        grep -i "CMAKE_BUILD_TYPE" "$toolchain" | log "DEBUG"
-                    done
-                else
-                    log "DEBUG" "No toolchain files found in $build_dir"
-                fi
-
-                local cmake_error_log=$(find "$build_dir" -name "CMakeError.log" 2>/dev/null | head -n 1)
-                if [ -n "$cmake_error_log" ]; then
-                    log "DEBUG" "Found CMake error log: $cmake_error_log"
-                    log "DEBUG" "CMake error log content (last 30 lines):"
-                    tail -n 30 "$cmake_error_log" | while read -r line; do
-                        log "DEBUG" "  $line"
-                    done
-                fi
-            done
-        fi
+                    fi
+                done
+            fi
+        done
     done
 }
 
@@ -228,7 +235,7 @@ create_package() {
 
     local package_name=${package%/*}
     local package_version=${package#*/}
-    local package_ref="${package}@${USER}/${CHANNEL}"
+    local package_ref="${package_name}/${package_version}"
 
     log "INFO" "Creating package $package_ref with build profile $BUILD_PROFILE"
 
@@ -241,13 +248,18 @@ create_package() {
     if [ "$DEBUG_MODE" = "true" ]; then
         check_toolchain_files "$package_name" "$package_version" "before"
     fi
+
     local env_vars=""
     if [ "$DEBUG_MODE" = "true" ]; then
         env_vars="CONAN_LOGGING_LEVEL=debug CONAN_CMAKE_VERBOSE_MAKEFILE=1"
     fi
 
-    log "INFO" "Running: $env_vars conan create \"recipes/$package_name\"/*/  \"$package_ref\" --build missing -pr:b=$BUILD_PROFILE"
-    if ! eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build missing -pr:b=$BUILD_PROFILE; then
+    # Key changes for Conan 2.x:
+    # 1. Remove @user/channel from reference
+    # 2. Use --build=missing instead of --build missing
+    # 3. Profile specification is now slightly different
+    log "INFO" "Running: $env_vars conan create \"recipes/$package_name\"/*/  \"$package_ref\" --build=missing -pr:b=\"$BUILD_PROFILE\""
+    if ! eval $env_vars conan create "recipes/$package_name"/*/ "$package_ref" --build=missing -pr:b="$BUILD_PROFILE"; then
         log "ERROR" "Failed to create package $package_ref"
 
         if [[ "$package_name" == "otterbrix" ]] && [ "$DEBUG_MODE" = "true" ]; then
@@ -271,12 +283,24 @@ upload_package() {
         exit 1
     fi
 
-    local package_ref="${package}@${USER}/${CHANNEL}"
+    local package_name=${package%/*}
+    local package_version=${package#*/}
+    local package_ref="${package_name}/${package_version}"
 
     log "INFO" "Uploading package $package_ref to repository $CONAN_REMOTE"
 
-    # Upload package
-    if ! conan upload "$package_ref" -r "$CONAN_REMOTE" --all --force --confirm; then
+    # Key changes for Conan 2.x:
+    # 1. Remove @user/channel from reference
+    # 2. Use --all is simplified
+    # 3. Add optional force upload
+    local upload_cmd="conan upload \"$package_ref\" -r \"$CONAN_REMOTE\" --all --confirm"
+
+    if [ "$FORCE_UPLOAD" = "true" ]; then
+        upload_cmd+=" --force"
+        log "INFO" "Force upload enabled for package $package_ref"
+    fi
+
+    if ! eval "$upload_cmd"; then
         log "ERROR" "Failed to upload package $package_ref"
         exit 1
     fi

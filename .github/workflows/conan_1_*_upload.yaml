@@ -14,25 +14,23 @@ jobs:
     name: Build and Upload Conan Packages
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:20.04
+      image: ubuntu:22.04  # Updated to a newer Ubuntu version
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # Updated to latest version
         with:
           fetch-depth: 0
 
       - name: Install dependencies
         run: |
           apt update
-          apt install -y  build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
+          apt install -y build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
 
       - name: Set up Conan
         run: |
-          pip install conan==1.66.0 cmake
-          conan user
-          conan profile new default --detect --force
-          conan profile update settings.compiler.libcxx=libstdc++11 default
+          pip install conan==2.2.2  # Latest Conan 2.x version
+          conan profile detect --force
           conan remote add duckstax http://conan.duckstax.com
 
       - name: Prepare package list
@@ -44,6 +42,7 @@ jobs:
               PACKAGE_NAME=$(basename "$dir")
               PACKAGE_DIR=$(find "$dir" -name conanfile.py -type f | head -n 1 | xargs dirname)
               if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
+                # Conan 2 version extraction might be slightly different
                 VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' "$PACKAGE_DIR/conanfile.py" || echo "")
                 if [ -n "$VERSION" ]; then
                   echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
@@ -64,13 +63,17 @@ jobs:
             exit 0
           fi
 
-      - name: Build packages
+      - name: Build and Upload Packages
         run: |
-          chmod +x create-and-upload-conan.sh
+          # Authenticate with Conan remote
+          conan remote login duckstax ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
 
-          IS_PR="${{ github.event_name == 'pull_request' }}"
-          IS_MASTER="${{ github.ref == 'refs/heads/master' }}"
-
-            echo "Build and upload mode"
-            conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}
-            ./create-and-upload-conan.sh --profile=default
+          # Key changes for Conan 2:
+          # - Use 'conan create' instead of custom upload script
+          # - Explicit profile and remote specification
+          while IFS= read -r package; do
+            echo "Building package: $package"
+            conan create recipes/"$(echo "$package" | cut -d'/' -f1)" \
+              --profile=default \
+              --remote=otterbrix
+          done < req-seq.txt
