@@ -14,11 +14,11 @@ jobs:
     name: Build and Upload Conan Packages
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:22.04  # Updated to a newer Ubuntu version
+      image: ubuntu:22.04
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4  # Updated to latest version
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -29,20 +29,18 @@ jobs:
 
       - name: Set up Conan
         run: |
-          pip install conan==2.2.2  # Latest Conan 2.x version
+          pip install conan==2.2.2
           conan profile detect --force
           conan remote add otterbrix http://conan.otterbrix.com
 
       - name: Prepare package list
         run: |
-          # Create req-seq.txt with all packages
           touch req-seq.txt
           for dir in recipes/*/; do
             if [ -d "$dir" ]; then
               PACKAGE_NAME=$(basename "$dir")
               PACKAGE_DIR=$(find "$dir" -name conanfile.py -type f | head -n 1 | xargs dirname)
               if [ -n "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/conanfile.py" ]; then
-                # Conan 2 version extraction might be slightly different
                 VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' "$PACKAGE_DIR/conanfile.py" || echo "")
                 if [ -n "$VERSION" ]; then
                   echo "$PACKAGE_NAME/$VERSION" >> req-seq.txt
@@ -51,10 +49,8 @@ jobs:
             fi
           done
 
-          # Remove duplicates
           sort -u req-seq.txt -o req-seq.txt
 
-          # Check if there are packages to build
           if [ -s req-seq.txt ]; then
             echo "Found packages to build:"
             cat req-seq.txt
@@ -65,15 +61,6 @@ jobs:
 
       - name: Build and Upload Packages
         run: |
-          # Authenticate with Conan remote
+          chmod +x create-and-upload-conan.sh
           conan remote login otterbrix ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
-
-          # Key changes for Conan 2:
-          # - Use 'conan create' instead of custom upload script
-          # - Explicit profile and remote specification
-          while IFS= read -r package; do
-            echo "Building package: $package"
-            conan create recipes/"$(echo "$package" | cut -d'/' -f1)" \
-              --profile=default \
-              --remote=otterbrix
-          done < req-seq.txt
+          ./create-and-upload-conan.sh --profile=default
