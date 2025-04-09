@@ -31,7 +31,7 @@ jobs:
         run: |
           pip install conan==2.2.2  # Latest Conan 2.x version
           conan profile detect --force
-          conan remote add duckstax http://conan.duckstax.com
+          conan remote add otterbrix http://conan.otterbrix.com
 
       - name: Prepare package list
         run: |
@@ -66,7 +66,7 @@ jobs:
       - name: Build and Upload Packages
         run: |
           # Authenticate with Conan remote
-          conan remote login duckstax ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
+          conan remote login otterbrix ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
 
           # Key changes for Conan 2:
           # - Use 'conan create' instead of custom upload script
