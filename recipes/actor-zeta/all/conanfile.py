@@ -42,11 +42,11 @@ class ActorZetaConan(ConanFile):
     def configure_cmake(self):
         cmake = CMake(self)
 
-        cmake.definitions["SHARED"] = self.options.shared
-        cmake.definitions["fPIC"] = self.options.fPIC
-        cmake.definitions["EXCEPTIONS_DISABLE"] = self.options.exceptions_disable
-        cmake.definitions["RTTI_DISABLE"] = self.options.rtti_disable
-        cmake.definitions["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
+        cmake.variables["SHARED"] = self.options.shared
+        cmake.variables["fPIC"] = self.options.fPIC
+        cmake.variables["EXCEPTIONS_DISABLE"] = self.options.exceptions_disable
+        cmake.variables["RTTI_DISABLE"] = self.options.rtti_disable
+        cmake.variables["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
 
         cmake.configure()
         return cmake
