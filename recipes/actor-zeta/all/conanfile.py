@@ -53,9 +53,10 @@ class ActorZetaConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.generate()
-
-        cmake = CMake(self)
-        cmake.configure()
+        tc.variables["EXCEPTIONS_DISABLE"] = self.options.get_safe("exceptions_disable")
+        tc.variables["RTTI_DISABLE"] = self.options.get_safe("rtti_disable")
+        tc.variables["SHARED"] = self.options.get_safe("shared")
+        tc.variables["CMAKE_CXX_STANDARD"] = self.options.get_safe("cxx_standard")
 
     def build(self):
         cmake = CMake(self)
