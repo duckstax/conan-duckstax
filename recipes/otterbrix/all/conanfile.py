@@ -1,6 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
-from conan.tools.files import apply_conandata_patches, export_conandata_patches, copy, get, rmdir, save, load
+from conan.tools.files import copy, get, rmdir, save, load
 
 
 class Otterbrix(ConanFile):
@@ -23,19 +23,19 @@ class Otterbrix(ConanFile):
     }
 
     def requirements(self):
-        self.requires("boost/1.86.0@")
-        self.requires("fmt/10.2.1@")
-        self.requires("spdlog/1.12.0@")
-        self.requires("pybind11/2.10.0@")
-        self.requires("msgpack-cxx/4.1.1@")
-        self.requires("catch2/2.13.7@")
-        self.requires("crc32c/1.1.2@")
-        self.requires("abseil/20230802.1@")
-        self.requires("benchmark/1.6.1@")
-        self.requires("zlib/1.3.1@")
-        self.requires("bzip2/1.0.8@")
-        self.requires("magic_enum/0.8.1@")
-        self.requires("actor-zeta/1.0.0a11@duckstax/stable")
+        self.requires("boost/1.86.0")
+        self.requires("fmt/10.2.1")
+        self.requires("spdlog/1.12.0")
+        self.requires("pybind11/2.10.0")
+        self.requires("msgpack-cxx/4.1.1")
+        self.requires("catch2/2.13.7")
+        self.requires("crc32c/1.1.2")
+        self.requires("abseil/20230802.1")
+        self.requires("benchmark/1.6.1")
+        self.requires("zlib/1.3.1")
+        self.requires("bzip2/1.0.8")
+        self.requires("magic_enum/0.8.1")
+        self.requires("actor-zeta/1.0.0a11")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -43,20 +43,11 @@ class Otterbrix(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
-    @property
-    def _minimum_cpp_standard(self):
-        return 17
-
     def generate(self):
         deps = CMakeDeps(self)
         deps.generate()
         tc = CMakeToolchain(self)
         tc.generate()
-
-    def build(self):
-        cmake = CMake(self)
-        cmake.configure()
-        cmake.build()
 
     def build(self):
         cmake = CMake(self)

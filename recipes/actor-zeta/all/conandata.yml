@@ -29,7 +29,7 @@ sources:
 
   "1.0.0a12":
     url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a12.tar.gz"
-    sha256: "7dca5718ae49a96c9aca1d2a39e904c01a52c5e9e2ddc4414c47b0bcff90e2c5"
+    sha256: "8f2d0ca36ee43944a5c76174077405b200e5b358addc60602df1fe1e095e9277"
 
 patches:
   "1.0.0a8":
