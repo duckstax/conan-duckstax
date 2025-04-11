@@ -39,6 +39,18 @@ class ActorZetaConan(ConanFile):
         if self.settings.os == "Windows":
             self.options.rm_safe("fPIC")
 
+    def configure_cmake(self):
+        cmake = CMake(self)
+
+        cmake.definitions["SHARED"] = self.options.shared
+        cmake.definitions["fPIC"] = self.options.fPIC
+        cmake.definitions["EXCEPTIONS_DISABLE"] = self.options.exceptions_disable
+        cmake.definitions["RTTI_DISABLE"] = self.options.rtti_disable
+        cmake.definitions["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
+
+        cmake.configure()
+        return cmake
+
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
@@ -53,15 +65,10 @@ class ActorZetaConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.generate()
-        tc.variables["EXCEPTIONS_DISABLE"] = self.options.exceptions_disable
-        tc.variables["RTTI_DISABLE"] = self.options.rtti_disable
-        tc.variables["SHARED"] = self.options.shared
-        tc.variables["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
-        cmake = CMake(self)
-        cmake.configure()
+        self.configure_cmake()
 
     def build(self):
-        cmake = CMake(self)
+        cmake = self.configure_cmake()
         cmake.build()
 
     def package(self):
@@ -79,6 +86,9 @@ class ActorZetaConan(ConanFile):
         copy(self, "*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
         copy(self, "*.so*", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
         copy(self, "*.dylib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+
+        cmake = self.configure_cmake()
+        cmake.install()
 
     def package_info(self):
         self.cpp_info.libs = collect_libs(self)
