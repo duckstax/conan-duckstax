@@ -57,6 +57,8 @@ class ActorZetaConan(ConanFile):
         tc.variables["RTTI_DISABLE"] = self.options.get_safe("rtti_disable")
         tc.variables["SHARED"] = self.options.get_safe("shared")
         tc.variables["CMAKE_CXX_STANDARD"] = self.options.get_safe("cxx_standard")
+        cmake = CMake(self)
+        cmake.configure()
 
     def build(self):
         cmake = CMake(self)
