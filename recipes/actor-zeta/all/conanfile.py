@@ -41,14 +41,11 @@ class ActorZetaConan(ConanFile):
 
     def configure_cmake(self):
         cmake = CMake(self)
-
-        cmake.variables["SHARED"] = self.options.shared
-        cmake.variables["fPIC"] = self.options.fPIC
-        cmake.variables["EXCEPTIONS_DISABLE"] = self.options.exceptions_disable
-        cmake.variables["RTTI_DISABLE"] = self.options.rtti_disable
-        cmake.variables["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
-
-        cmake.configure()
+        cmake.definitions["SHARED"] = self.options.shared
+        cmake.definitions["fPIC"] = self.options.get_safe("fPIC", False)
+        cmake.definitions["EXCEPTIONS_DISABLE"] = self.options.exceptions_disable
+        cmake.definitions["RTTI_DISABLE"] = self.options.rtti_disable
+        cmake.definitions["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
         return cmake
 
     def configure(self):
@@ -65,10 +62,10 @@ class ActorZetaConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.generate()
-        self.configure_cmake()
 
     def build(self):
         cmake = self.configure_cmake()
+        cmake.configure()
         cmake.build()
 
     def package(self):
@@ -88,6 +85,7 @@ class ActorZetaConan(ConanFile):
         copy(self, "*.dylib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
         cmake = self.configure_cmake()
+        cmake.configure()  # Add configure call here too
         cmake.install()
 
     def package_info(self):
