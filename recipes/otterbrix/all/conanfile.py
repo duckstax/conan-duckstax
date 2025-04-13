@@ -43,6 +43,14 @@ class Otterbrix(ConanFile):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def generate(self):
+        tc = CMakeToolchain(self)
+        tc.variables["CMAKE_PREFIX_PATH"] = "${CMAKE_BINARY_DIR}"
+        tc.variables["CMAKE_MODULE_PATH"] = "${CMAKE_BINARY_DIR}"
+        tc.variables["Boost_NO_SYSTEM_PATHS"] = "OFF"
+        tc.variables["BOOST_INCLUDEDIR"] = "${CMAKE_BINARY_DIR}/include"
+        tc.variables["BOOST_LIBRARYDIR"] = "${CMAKE_BINARY_DIR}/lib"
+        tc.generate()
+
         deps = CMakeDeps(self)
         deps.set_property("boost", "cmake_file_name", "Boost")
         deps.set_property("boost", "cmake_find_mode", "both")
@@ -55,14 +63,6 @@ class Otterbrix(ConanFile):
         deps.set_property("zlib", "cmake_file_name", "ZLIB")
         deps.set_property("bzip2", "cmake_file_name", "BZip2")
         deps.generate()
-
-        tc = CMakeToolchain(self)
-        tc.variables["CMAKE_PREFIX_PATH"] = "${CMAKE_BINARY_DIR}"
-        tc.variables["CMAKE_MODULE_PATH"] = "${CMAKE_BINARY_DIR}"
-        tc.variables["Boost_NO_SYSTEM_PATHS"] = "OFF"
-        tc.variables["BOOST_INCLUDEDIR"] = "${CMAKE_BINARY_DIR}/include"
-        tc.variables["BOOST_LIBRARYDIR"] = "${CMAKE_BINARY_DIR}/lib"
-        tc.generate()
 
     def build(self):
         cmake = CMake(self)
