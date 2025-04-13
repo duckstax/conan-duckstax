@@ -1,6 +1,7 @@
-from conans import ConanFile, CMake, tools
-from conan.tools.files import (
-    apply_conandata_patches, export_conandata_patches)
+from conan import ConanFile
+from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.files import apply_conandata_patches, export_conandata_patches, get, copy
+from conan.tools.files import collect_libs
 import os
 
 
@@ -11,73 +12,75 @@ class ActorZetaConan(ConanFile):
     homepage = "https://github.com/duckstax/actor-zeta"
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
-    exports = ["LICENSE.md"]
-    # exports_sources = ["CMakeLists.txt"]
-    generators = "cmake"
+    package_type = "library"
+
     settings = "os", "arch", "compiler", "build_type"
-    _cmake = None
 
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
         "exceptions_disable": [True, False],
         "rtti_disable": [True, False],
-        "cxx_standard": [11, 14, 17]
+        "cxx_standard": [11, 14, 17],
     }
 
     default_options = {
-        "exceptions_disable": False,
-        "rtti_disable": False,
         "shared": False,
         "fPIC": False,
-        "cxx_standard": 11
+        "exceptions_disable": False,
+        "rtti_disable": False,
+        "cxx_standard": 11,
     }
 
-    _source_subfolder = "source_subfolder"
-    _build_subfolder = "build_subfolder"
-
     def export_sources(self):
-        self.copy("CMakeLists.txt")
         export_conandata_patches(self)
 
     def config_options(self):
-        if self.settings.os == 'Windows':
-            del self.options.fPIC
+        if self.settings.os == "Windows":
+            self.options.rm_safe("fPIC")
 
-    def _configure_cmake(self):
-        if not self._cmake:
-            self._cmake = CMake(self)
-            self._cmake.definitions["EXCEPTIONS_DISABLE"] = self.options.exceptions_disable
-            self._cmake.definitions["RTTI_DISABLE"] = self.options.rtti_disable
-            self._cmake.definitions["SHARED"] = self.options.shared
-            self._cmake.definitions["CMAKE_CXX_STANDARD"] = self.options.cxx_standard
-            self._cmake.configure(build_folder=self._build_subfolder)
-        return self._cmake
+    def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
+
+    def layout(self):
+        cmake_layout(self)
 
     def source(self):
-        tools.get(**self.conan_data["sources"][self.version])
-        extracted_dir = self.name + "-" + self.version
-        os.rename(extracted_dir, self._source_subfolder)
+        get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
 
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.variables["EXCEPTIONS_DISABLE"] = self.options.get_safe("exceptions_disable")
+        tc.variables["RTTI_DISABLE"] = self.options.get_safe("rtti_disable")
+        tc.variables["SHARED"] = self.options.get_safe("shared")
+        tc.variables["CMAKE_CXX_STANDARD"] = self.options.get_safe("cxx_standard")
+        tc.generate()
+
     def build(self):
-        cmake = self._configure_cmake()
+        cmake = CMake(self)
+        cmake.configure()
         cmake.build()
 
     def package(self):
-        include_folder = os.path.join(self._source_subfolder, "header/actor-zeta")
-        self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
-        self.copy('actor-zeta.hpp', dst='include', src= os.path.join(self._source_subfolder, "header"))
-        self.copy('*.hpp', dst='include/actor-zeta', src=include_folder)
-        self.copy('*.ipp', dst='include/actor-zeta', src=include_folder)
-        #self.copy('*.hpp', dst='include/actor-zeta', src=os.path.join(self._source_subfolder, "header"))
-        self.copy(pattern="*.dll", dst="bin", keep_path=False)
-        self.copy(pattern="*.lib", dst="lib", keep_path=False)
-        self.copy(pattern="*.a", dst="lib", keep_path=False)
-        self.copy(pattern="*.so*", dst="lib", keep_path=False)
-        self.copy(pattern="*.dylib", dst="lib", keep_path=False)
+        copy(self, "LICENSE*", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+
+        # Copy header files
+        include_folder = os.path.join(self.source_folder, "header/actor-zeta")
+        copy(self, "actor-zeta.hpp", src=os.path.join(self.source_folder, "header"), dst=os.path.join(self.package_folder, "include"))
+        copy(self, "*.hpp", src=include_folder, dst=os.path.join(self.package_folder, "include/actor-zeta"))
+        copy(self, "*.ipp", src=include_folder, dst=os.path.join(self.package_folder, "include/actor-zeta"))
+
+        # Copy libraries
+        copy(self, "*.dll", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path=False)
+        copy(self, "*.lib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.so*", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.dylib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
     def package_info(self):
+        self.cpp_info.libs = collect_libs(self)
+
         if self.settings.os == "Linux":
             self.cpp_info.system_libs.append("pthread")
-        self.cpp_info.libs = tools.collect_libs(self)

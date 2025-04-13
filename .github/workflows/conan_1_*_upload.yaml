@@ -14,30 +14,27 @@ jobs:
     name: Build and Upload Conan Packages
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:20.04
+      image: ubuntu:22.04
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install dependencies
         run: |
           apt update
-          apt install -y  build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
+          apt install -y build-essential ninja-build python3-pip python3-dev curl gnupg apt-transport-https
 
       - name: Set up Conan
         run: |
-          pip install conan==1.66.0 cmake
-          conan user
-          conan profile new default --detect --force
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-          conan remote add duckstax http://conan.duckstax.com
+          pip install 'conan==2.14.0' 'cmake<4.0'
+          conan profile detect --force
+          conan remote add otterbrix http://conan.otterbrix.com
 
       - name: Prepare package list
         run: |
-          # Create req-seq.txt with all packages
           touch req-seq.txt
           for dir in recipes/*/; do
             if [ -d "$dir" ]; then
@@ -52,10 +49,8 @@ jobs:
             fi
           done
 
-          # Remove duplicates
           sort -u req-seq.txt -o req-seq.txt
 
-          # Check if there are packages to build
           if [ -s req-seq.txt ]; then
             echo "Found packages to build:"
             cat req-seq.txt
@@ -64,13 +59,8 @@ jobs:
             exit 0
           fi
 
-      - name: Build packages
+      - name: Build and Upload Packages
         run: |
           chmod +x create-and-upload-conan.sh
-
-          IS_PR="${{ github.event_name == 'pull_request' }}"
-          IS_MASTER="${{ github.ref == 'refs/heads/master' }}"
-
-            echo "Build and upload mode"
-            conan user ${{ secrets.CONAN_LOGIN_USERNAME }} -r duckstax -p ${{ secrets.CONAN_PASSWORD }}
-            ./create-and-upload-conan.sh --profile=default
+          conan remote login otterbrix ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
+          ./create-and-upload-conan.sh --profile=default --debug
