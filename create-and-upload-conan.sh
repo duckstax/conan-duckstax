@@ -253,6 +253,10 @@ create_package() {
         env_vars="CONAN_LOGGING_LEVEL=debug CONAN_CMAKE_VERBOSE_MAKEFILE=1"
     fi
 
+    if [ "$DEBUG_MODE" = "true" ]; then
+        $env_vars conan search "fmt/*"
+    fi
+
     log "INFO" "Running: $env_vars conan create \"recipes/$package_name\"/*/ --name \"$package_name\" --version \"$package_version\" --build=missing -pr:b=\"$BUILD_PROFILE\""
 
     if ! eval $env_vars conan create "recipes/$package_name"/*/ --name "$package_name" --version "$package_version" --build=missing -pr:b="$BUILD_PROFILE"; then

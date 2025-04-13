@@ -63,4 +63,4 @@ jobs:
         run: |
           chmod +x create-and-upload-conan.sh
           conan remote login otterbrix ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
-          ./create-and-upload-conan.sh --profile=default
+          ./create-and-upload-conan.sh --profile=default --debug
