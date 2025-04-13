@@ -81,7 +81,6 @@ class Otterbrix(ConanFile):
         self.cpp_info.components["cpp_otterbrix"].requires.append("msgpack-cxx::msgpack-cxx")
         self.cpp_info.components["cpp_otterbrix"].requires.append("fmt::fmt")
         self.cpp_info.components["cpp_otterbrix"].requires.append("spdlog::spdlog")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("crc32c::crc32c")
         self.cpp_info.components["cpp_otterbrix"].requires.append("zlib::zlib")
         self.cpp_info.components["cpp_otterbrix"].requires.append("bzip2::bzip2")
 
