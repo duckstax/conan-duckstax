@@ -43,28 +43,14 @@ class Otterbrix(ConanFile):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def generate(self):
-        # Создаем и генерируем зависимости CMake
         deps = CMakeDeps(self)
-        # Общие настройки для всех зависимостей
-        for dep in self.dependencies.values():
-            # Устанавливаем режим поиска both для всех зависимостей
-            deps.set_property(dep.ref.name, "cmake_find_mode", "both")
         deps.generate()
 
-        # Создаем и генерируем CMake toolchain
         tc = CMakeToolchain(self)
-        # Предпочитаем CONFIG режим поиска пакетов
-        tc.variables["CMAKE_FIND_PACKAGE_PREFER_CONFIG"] = "ON"
-        # Включаем поиск в папке build
-        tc.variables["CMAKE_FIND_USE_PACKAGE_ROOT_PATH"] = "ON"
-        tc.variables["CMAKE_FIND_USE_CMAKE_PATH"] = "ON"
-        tc.variables["CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH"] = "ON"
         tc.generate()
 
     def build(self):
         cmake = CMake(self)
-        # Добавляем переменную, указывающую на пакеты Conan
-        cmake.definitions["CMAKE_PREFIX_PATH"] = self.build_folder
         cmake.configure()
         cmake.build()
 
