@@ -86,6 +86,7 @@ class Otterbrix(ConanFile):
         # TODO: recheck usage by the component
         self.cpp_info.components["cpp_otterbrix"].requires.append("pybind11::pybind11")
         self.cpp_info.components["cpp_otterbrix"].requires.append("catch2::catch2")
+        self.cpp_info.components["cpp_otterbrix"].requires.append("benchmark::benchmark")
 
         self.cpp_info.components["otterbrix_document"].libs = ["otterbrix_document"]
         self.cpp_info.components["otterbrix_types"].libs = ["otterbrix_types"]
