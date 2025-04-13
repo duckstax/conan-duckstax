@@ -16,10 +16,10 @@ class Otterbrix(ConanFile):
 
     default_options = {
         "shared": True,
-        "actor-zeta:cxx_standard": 17,
-        "actor-zeta:fPIC": True,
-        "actor-zeta:exceptions_disable": False,
-        "actor-zeta:rtti_disable": False,
+        "actor-zeta/*:cxx_standard": 17,
+        "actor-zeta/*:fPIC": True,
+        "actor-zeta/*:exceptions_disable": False,
+        "actor-zeta/*:rtti_disable": False,
     }
 
     def requirements(self):
