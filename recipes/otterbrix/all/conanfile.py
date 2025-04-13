@@ -23,7 +23,7 @@ class Otterbrix(ConanFile):
     }
 
     def requirements(self):
-        self.requires("boost/1.87.0", override=True)
+        self.requires("boost/1.86.0", override=True)
         self.requires("fmt/11.1.3@", override=True)
         self.requires("spdlog/1.15.1@", override=True)
         self.requires("pybind11/2.10.0@", override=True)
