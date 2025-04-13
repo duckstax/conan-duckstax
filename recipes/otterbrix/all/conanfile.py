@@ -83,6 +83,8 @@ class Otterbrix(ConanFile):
         self.cpp_info.components["cpp_otterbrix"].requires.append("spdlog::spdlog")
         self.cpp_info.components["cpp_otterbrix"].requires.append("zlib::zlib")
         self.cpp_info.components["cpp_otterbrix"].requires.append("bzip2::bzip2")
+        # TODO: recheck usage by the component
+        self.cpp_info.components["cpp_otterbrix"].requires.append("pybind11::pybind11")
 
         self.cpp_info.components["otterbrix_document"].libs = ["otterbrix_document"]
         self.cpp_info.components["otterbrix_types"].libs = ["otterbrix_types"]
