@@ -44,24 +44,9 @@ class Otterbrix(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["CMAKE_PREFIX_PATH"] = "${CMAKE_BINARY_DIR}"
-        tc.variables["CMAKE_MODULE_PATH"] = "${CMAKE_BINARY_DIR}"
-        tc.variables["Boost_NO_SYSTEM_PATHS"] = "OFF"
-        tc.variables["BOOST_INCLUDEDIR"] = "${CMAKE_BINARY_DIR}/include"
-        tc.variables["BOOST_LIBRARYDIR"] = "${CMAKE_BINARY_DIR}/lib"
         tc.generate()
 
         deps = CMakeDeps(self)
-        deps.set_property("boost", "cmake_file_name", "Boost")
-        deps.set_property("boost", "cmake_find_mode", "both")
-        deps.set_property("fmt", "cmake_file_name", "fmt")
-        deps.set_property("fmt", "cmake_find_mode", "both")
-        deps.set_property("spdlog", "cmake_file_name", "spdlog")
-        deps.set_property("spdlog", "cmake_find_mode", "both")
-        deps.set_property("pybind11", "cmake_file_name", "pybind11")
-        deps.set_property("abseil", "cmake_file_name", "absl")
-        deps.set_property("zlib", "cmake_file_name", "ZLIB")
-        deps.set_property("bzip2", "cmake_file_name", "BZip2")
         deps.generate()
 
     def build(self):
