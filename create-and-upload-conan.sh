@@ -254,7 +254,7 @@ create_package() {
     fi
 
     if [ "$DEBUG_MODE" = "true" ]; then
-        $env_vars conan search "fmt/*"
+        eval $env_vars conan search "fmt/*"
     fi
 
     log "INFO" "Running: $env_vars conan create \"recipes/$package_name\"/*/ --name \"$package_name\" --version \"$package_version\" --build=missing -pr:b=\"$BUILD_PROFILE\""
