@@ -55,14 +55,14 @@ class Otterbrix(ConanFile):
         cmake.build()
 
     def package(self):
-        self.copy("*.hpp", dst="include/otterbrix", src="integration/cpp")
-        self.copy("*.h", dst="include/otterbrix", src="integration/cpp")
-        self.copy("*.hpp", dst="include", src=".")
-        self.copy("*.h", dst="include", src=".")
-        self.copy("*.dll", dst="bin", keep_path=False)  # Windows shared library
-        self.copy("*.so", dst="lib", keep_path=False)  # Linux shared library
-        self.copy("*.dylib", dst="lib", keep_path=False)  # macOS shared library
-        self.copy("*.a", dst="lib", keep_path=False)  # Static library (if needed)
+        copy(self, "*.hpp", dst="include/otterbrix", src="integration/cpp")
+        copy(self, "*.h", dst="include/otterbrix", src="integration/cpp")
+        copy(self, "*.hpp", dst="include", src=".")
+        copy(self, "*.h", dst="include", src=".")
+        copy(self, "*.dll", dst="bin", keep_path=False)  # Windows shared library
+        copy(self, "*.so", dst="lib", keep_path=False)  # Linux shared library
+        copy(self, "*.dylib", dst="lib", keep_path=False)  # macOS shared library
+        copy(self, "*.a", dst="lib", keep_path=False)  # Static library (if needed)
 
     def package_info(self):
         self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
@@ -92,4 +92,4 @@ class Otterbrix(ConanFile):
         self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
         self.cpp_info.components["otterbrix_sql"].libs = ["otterbrix_sql"]
 
-        self.cpp_info.includedirs = ["include"]
+        #self.cpp_info.includedirs = ["include"]
