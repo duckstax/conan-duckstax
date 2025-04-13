@@ -1,7 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
 from conan.tools.files import copy, get, rmdir, save, load
-
+import os
 
 class Otterbrix(ConanFile):
     name = "otterbrix"
@@ -55,14 +55,15 @@ class Otterbrix(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "*.hpp", dst="include/otterbrix", src="integration/cpp")
-        copy(self, "*.h", dst="include/otterbrix", src="integration/cpp")
-        copy(self, "*.hpp", dst="include", src=".")
-        copy(self, "*.h", dst="include", src=".")
-        copy(self, "*.dll", dst="bin", keep_path=False)  # Windows shared library
-        copy(self, "*.so", dst="lib", keep_path=False)  # Linux shared library
-        copy(self, "*.dylib", dst="lib", keep_path=False)  # macOS shared library
-        copy(self, "*.a", dst="lib", keep_path=False)  # Static library (if needed)
+        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
+        copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=os.path.join(self.source_folder, "integration", "cpp"))
+        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
+        copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
+
+        copy(self, "*.dll", dst="bin", src=self.build_folder, keep_path=False)  # Windows shared library
+        copy(self, "*.so", dst="lib", src=self.build_folder, keep_path=False)  # Linux shared library
+        copy(self, "*.dylib", dst="lib", src=self.build_folder, keep_path=False)  # macOS shared library
+        copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)  # Static library (if needed)
 
     def package_info(self):
         self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
@@ -92,4 +93,4 @@ class Otterbrix(ConanFile):
         self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
         self.cpp_info.components["otterbrix_sql"].libs = ["otterbrix_sql"]
 
-        #self.cpp_info.includedirs = ["include"]
+        self.cpp_info.includedirs = ["include"]
