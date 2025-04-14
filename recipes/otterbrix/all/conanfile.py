@@ -5,7 +5,7 @@ import os
 
 
 class Otterbrix(ConanFile):
-    name = "otterbrix"
+    name = "cpp_otterbrix"
     description = "otterbrix is an open-source framework for developing conventional and analytical applications."
     url = "https://github.com/duckstax/otterbrix"
     homepage = "https://github.com/duckstax/otterbrix"
