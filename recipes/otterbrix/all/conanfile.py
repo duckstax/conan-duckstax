@@ -5,7 +5,7 @@ import os
 
 
 class Otterbrix(ConanFile):
-    name = "cpp_otterbrix"
+    name = "otterbrix"
     description = "otterbrix is an open-source framework for developing conventional and analytical applications."
     url = "https://github.com/duckstax/otterbrix"
     homepage = "https://github.com/duckstax/otterbrix"
@@ -67,27 +67,27 @@ class Otterbrix(ConanFile):
         copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)  # Static library (if needed)
 
     def package_info(self):
-        self.cpp_info.components["cpp_otterbrix"].libs = ["cpp_otterbrix"]
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_document")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_types")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_cursor")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_session")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_expressions")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_logical_plan")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("otterbrix_sql")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("boost::boost")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("abseil::abseil")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("actor-zeta::actor-zeta")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("magic_enum::magic_enum")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("msgpack-cxx::msgpack-cxx")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("fmt::fmt")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("spdlog::spdlog")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("zlib::zlib")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("bzip2::bzip2")
+        self.cpp_info.components["otterbrix"].libs = ["cpp_otterbrix"]
+        self.cpp_info.components["otterbrix"].requires.append("otterbrix_document")
+        self.cpp_info.components["otterbrix"].requires.append("otterbrix_types")
+        self.cpp_info.components["otterbrix"].requires.append("otterbrix_cursor")
+        self.cpp_info.components["otterbrix"].requires.append("otterbrix_session")
+        self.cpp_info.components["otterbrix"].requires.append("otterbrix_expressions")
+        self.cpp_info.components["otterbrix"].requires.append("otterbrix_logical_plan")
+        self.cpp_info.components["otterbrix"].requires.append("otterbrix_sql")
+        self.cpp_info.components["otterbrix"].requires.append("boost::boost")
+        self.cpp_info.components["otterbrix"].requires.append("abseil::abseil")
+        self.cpp_info.components["otterbrix"].requires.append("actor-zeta::actor-zeta")
+        self.cpp_info.components["otterbrix"].requires.append("magic_enum::magic_enum")
+        self.cpp_info.components["otterbrix"].requires.append("msgpack-cxx::msgpack-cxx")
+        self.cpp_info.components["otterbrix"].requires.append("fmt::fmt")
+        self.cpp_info.components["otterbrix"].requires.append("spdlog::spdlog")
+        self.cpp_info.components["otterbrix"].requires.append("zlib::zlib")
+        self.cpp_info.components["otterbrix"].requires.append("bzip2::bzip2")
         # TODO: recheck usage by the component
-        self.cpp_info.components["cpp_otterbrix"].requires.append("pybind11::pybind11")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("catch2::catch2")
-        self.cpp_info.components["cpp_otterbrix"].requires.append("benchmark::benchmark")
+        self.cpp_info.components["otterbrix"].requires.append("pybind11::pybind11")
+        self.cpp_info.components["otterbrix"].requires.append("catch2::catch2")
+        self.cpp_info.components["otterbrix"].requires.append("benchmark::benchmark")
 
         self.cpp_info.components["otterbrix_document"].libs = ["otterbrix_document"]
         self.cpp_info.components["otterbrix_types"].libs = ["otterbrix_types"]
