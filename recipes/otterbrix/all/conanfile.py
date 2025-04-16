@@ -71,34 +71,35 @@ class Otterbrix(ConanFile):
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
         self.cpp_info.set_property("cmake_target_name", "otterbrix::otterbrix")
 
-        self.cpp_info.components["otterbrix"].libs = ["cpp_otterbrix"]
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_document")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_types")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_cursor")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_session")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_expressions")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_sql")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_logical_plan")
-        self.cpp_info.components["otterbrix"].requires.append("boost::boost")
-        self.cpp_info.components["otterbrix"].requires.append("abseil::abseil")
-        self.cpp_info.components["otterbrix"].requires.append("actor-zeta::actor-zeta")
-        self.cpp_info.components["otterbrix"].requires.append("magic_enum::magic_enum")
-        self.cpp_info.components["otterbrix"].requires.append("msgpack-cxx::msgpack-cxx")
-        self.cpp_info.components["otterbrix"].requires.append("fmt::fmt")
-        self.cpp_info.components["otterbrix"].requires.append("spdlog::spdlog")
-        self.cpp_info.components["otterbrix"].requires.append("zlib::zlib")
-        self.cpp_info.components["otterbrix"].requires.append("bzip2::bzip2")
+        self.cpp_info.libs = collect_libs(self)
+        #self.cpp_info.components["otterbrix"].libs = ["cpp_otterbrix"]
+        #self.cpp_info.components["otterbrix"].requires.append("otterbrix_document")
+        #self.cpp_info.components["otterbrix"].requires.append("otterbrix_types")
+        #self.cpp_info.components["otterbrix"].requires.append("otterbrix_cursor")
+        #self.cpp_info.components["otterbrix"].requires.append("otterbrix_session")
+        #self.cpp_info.components["otterbrix"].requires.append("otterbrix_expressions")
+        #self.cpp_info.components["otterbrix"].requires.append("otterbrix_sql")
+        #self.cpp_info.components["otterbrix"].requires.append("otterbrix_logical_plan")
+        #self.cpp_info.components["otterbrix"].requires.append("boost::boost")
+        #self.cpp_info.components["otterbrix"].requires.append("abseil::abseil")
+        #self.cpp_info.components["otterbrix"].requires.append("actor-zeta::actor-zeta")
+        #self.cpp_info.components["otterbrix"].requires.append("magic_enum::magic_enum")
+        #self.cpp_info.components["otterbrix"].requires.append("msgpack-cxx::msgpack-cxx")
+        #self.cpp_info.components["otterbrix"].requires.append("fmt::fmt")
+        #self.cpp_info.components["otterbrix"].requires.append("spdlog::spdlog")
+        #self.cpp_info.components["otterbrix"].requires.append("zlib::zlib")
+        #self.cpp_info.components["otterbrix"].requires.append("bzip2::bzip2")
         # TODO: recheck usage by the component
-        self.cpp_info.components["otterbrix"].requires.append("pybind11::pybind11")
-        self.cpp_info.components["otterbrix"].requires.append("catch2::catch2")
-        self.cpp_info.components["otterbrix"].requires.append("benchmark::benchmark")
+        #self.cpp_info.components["otterbrix"].requires.append("pybind11::pybind11")
+        #self.cpp_info.components["otterbrix"].requires.append("catch2::catch2")
+        #self.cpp_info.components["otterbrix"].requires.append("benchmark::benchmark")
 
-        self.cpp_info.components["otterbrix_document"].libs = ["otterbrix_document"]
-        self.cpp_info.components["otterbrix_types"].libs = ["otterbrix_types"]
-        self.cpp_info.components["otterbrix_cursor"].libs = ["otterbrix_cursor"]
-        self.cpp_info.components["otterbrix_session"].libs = ["otterbrix_session"]
-        self.cpp_info.components["otterbrix_expressions"].libs = ["otterbrix_expressions"]
-        self.cpp_info.components["otterbrix_sql"].libs = ["otterbrix_sql"]
-        self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
+        #self.cpp_info.components["otterbrix_document"].libs = ["otterbrix_document"]
+        #self.cpp_info.components["otterbrix_types"].libs = ["otterbrix_types"]
+        #self.cpp_info.components["otterbrix_cursor"].libs = ["otterbrix_cursor"]
+        #self.cpp_info.components["otterbrix_session"].libs = ["otterbrix_session"]
+        #self.cpp_info.components["otterbrix_expressions"].libs = ["otterbrix_expressions"]
+        #self.cpp_info.components["otterbrix_sql"].libs = ["otterbrix_sql"]
+        #self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
 
-        self.cpp_info.includedirs = ["include"]
+        #self.cpp_info.includedirs = ["include"]
