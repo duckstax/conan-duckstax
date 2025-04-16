@@ -1,6 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
-from conan.tools.files import copy, get, rmdir, save, load
+from conan.tools.files import copy, get, rmdir, save, load, collect_libs
 import os
 
 
@@ -57,18 +57,18 @@ class Otterbrix(ConanFile):
 
     def package(self):
         copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
-        copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=os.path.join(self.source_folder, "integration", "cpp"))
+        copy(self, "*.h", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
         copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
         copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
 
+        copy(self, "*.lib", dst="lib", src=self.build_folder, keep_path=False)
         copy(self, "*.dll", dst="bin", src=self.build_folder, keep_path=False)  # Windows shared library
         copy(self, "*.so", dst="lib", src=self.build_folder, keep_path=False)  # Linux shared library
         copy(self, "*.dylib", dst="lib", src=self.build_folder, keep_path=False)  # macOS shared library
         copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)  # Static library (if needed)
 
     def package_info(self):
-        self.cpp_info.names["otterbrix"] = "otterbrix"
-        self.cpp_info.names["otterbrix"] = "cpp_otterbrix"
+        self.cpp_info.libs = collect_libs(self)
         self.cpp_info.components["otterbrix"].libs = ["cpp_otterbrix"]
         self.cpp_info.components["otterbrix"].requires.append("otterbrix_document")
         self.cpp_info.components["otterbrix"].requires.append("otterbrix_types")
