@@ -68,7 +68,10 @@ class Otterbrix(ConanFile):
         copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)  # Static library (if needed)
 
     def package_info(self):
-        self.cpp_info.libs = collect_libs(self)
+        libs = collect_libs(self)
+        self.output.info(f"Collected libraries: {libs}")
+
+        self.cpp_info.libs = libs
         self.cpp_info.components["otterbrix"].libs = ["cpp_otterbrix"]
         self.cpp_info.components["otterbrix"].requires.append("otterbrix_document")
         self.cpp_info.components["otterbrix"].requires.append("otterbrix_types")
