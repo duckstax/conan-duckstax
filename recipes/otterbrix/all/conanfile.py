@@ -56,16 +56,17 @@ class Otterbrix(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
-        copy(self, "*.h", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
-        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
-        copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
+        self.copy("*")
+        #copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
+        #copy(self, "*.h", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
+        #copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
+        #copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
 
-        copy(self, "*.lib", dst="lib", src=self.build_folder, keep_path=False)
-        copy(self, "*.dll", dst="bin", src=self.build_folder, keep_path=False)  # Windows shared library
-        copy(self, "*.so", dst="lib", src=self.build_folder, keep_path=False)  # Linux shared library
-        copy(self, "*.dylib", dst="lib", src=self.build_folder, keep_path=False)  # macOS shared library
-        copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)  # Static library (if needed)
+        #copy(self, "*.lib", dst="lib", src=self.build_folder, keep_path=False)
+        #copy(self, "*.dll", dst="bin", src=self.build_folder, keep_path=False)  # Windows shared library
+        #copy(self, "*.so", dst="lib", src=self.build_folder, keep_path=False)  # Linux shared library
+        #copy(self, "*.dylib", dst="lib", src=self.build_folder, keep_path=False)  # macOS shared library
+        #copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)  # Static library (if needed)
 
     def package_info(self):
         libs = collect_libs(self)
