@@ -77,8 +77,8 @@ class Otterbrix(ConanFile):
         self.cpp_info.components["otterbrix"].requires.append("otterbrix_cursor")
         self.cpp_info.components["otterbrix"].requires.append("otterbrix_session")
         self.cpp_info.components["otterbrix"].requires.append("otterbrix_expressions")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_logical_plan")
         self.cpp_info.components["otterbrix"].requires.append("otterbrix_sql")
+        self.cpp_info.components["otterbrix"].requires.append("otterbrix_logical_plan")
         self.cpp_info.components["otterbrix"].requires.append("boost::boost")
         self.cpp_info.components["otterbrix"].requires.append("abseil::abseil")
         self.cpp_info.components["otterbrix"].requires.append("actor-zeta::actor-zeta")
@@ -98,7 +98,7 @@ class Otterbrix(ConanFile):
         self.cpp_info.components["otterbrix_cursor"].libs = ["otterbrix_cursor"]
         self.cpp_info.components["otterbrix_session"].libs = ["otterbrix_session"]
         self.cpp_info.components["otterbrix_expressions"].libs = ["otterbrix_expressions"]
-        self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
         self.cpp_info.components["otterbrix_sql"].libs = ["otterbrix_sql"]
+        self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
 
         self.cpp_info.includedirs = ["include"]
