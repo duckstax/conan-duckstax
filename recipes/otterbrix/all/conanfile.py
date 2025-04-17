@@ -2,6 +2,7 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
 from conan.tools.files import copy, get, rmdir, save, load, collect_libs
 import os
+from glob import glob
 
 
 class Otterbrix(ConanFile):
@@ -65,6 +66,9 @@ class Otterbrix(ConanFile):
         copy(self, "*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
         copy(self, "*.so*", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
         copy(self, "*.dylib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+
+        for f in glob(os.path.join(self.package_folder, "lib", "otterbrix.cpython-*.so")):
+            os.remove(f)
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
