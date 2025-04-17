@@ -16,6 +16,7 @@ target_link_libraries(test_package
     arrow::arrow
     Boost::charconv
     Boost::boost
+    Boost::smart_ptr
     Threads::Threads
     OpenSSL::Crypto
     OpenSSL::SSL
