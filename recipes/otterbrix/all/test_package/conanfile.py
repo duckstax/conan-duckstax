@@ -15,7 +15,6 @@ class OtterbrixTestConan(ConanFile):
         self.requires("abseil/20230802.1@")
         self.requires("zlib/1.2.12")
         self.requires("bzip2/1.0.8")
-        self.requires("otterbrix/1.0.0a10-rc-3@")
         self.requires("catch2/2.13.7@")
 
     def layout(self):
