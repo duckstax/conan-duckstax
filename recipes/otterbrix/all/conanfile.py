@@ -78,15 +78,7 @@ class Otterbrix(ConanFile):
         self.cpp_info.libs = collect_libs(self)
         self.cpp_info.includedirs = ["include"]
         self.cpp_info.libdirs = ["lib"]
-        self.cpp_info.requires = ["boost::boost"]
-
-        self.cpp_info.requires.append("otterbrix_document")
-        self.cpp_info.requires.append("otterbrix_types")
-        self.cpp_info.requires.append("otterbrix_cursor")
-        self.cpp_info.requires.append("otterbrix_session")
-        self.cpp_info.requires.append("otterbrix_expressions")
-        self.cpp_info.requires.append("otterbrix_sql")
-        self.cpp_info.requires.append("otterbrix_logical_plan")
+        self.cpp_info.requires = []
         self.cpp_info.requires.append("boost::boost")
         self.cpp_info.requires.append("abseil::abseil")
         self.cpp_info.requires.append("actor-zeta::actor-zeta")
