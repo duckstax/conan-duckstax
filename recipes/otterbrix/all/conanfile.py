@@ -60,11 +60,11 @@ class Otterbrix(ConanFile):
         copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
         copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
 
-        # Только C++ библиотеки, игнорируя Python-модули
-        copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)
-        copy(self, "lib*.so", dst="lib", src=self.build_folder, keep_path=False)
-        copy(self, "lib*.dylib", dst="lib", src=self.build_folder, keep_path=False)
-        copy(self, "*.lib", dst="lib", src=self.build_folder, keep_path=False)
+        copy(self, "*.dll", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path=False)
+        copy(self, "*.lib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.so*", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.dylib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
