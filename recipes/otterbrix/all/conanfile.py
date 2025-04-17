@@ -68,9 +68,13 @@ class Otterbrix(ConanFile):
         copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)  # Static library (if needed)
 
     def package_info(self):
-        print(collect_libs(self))
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
         self.cpp_info.set_property("cmake_target_name", "otterbrix::otterbrix")
+
+        self.cpp_info.libs = []  # нет C++ библиотек
+        self.cpp_info.includedirs = []
+        self.cpp_info.libdirs = []
+        self.cpp_info.bindirs = ["bin"]  # .so будет здесь
 
         self.cpp_info.libs = collect_libs(self)
         #self.cpp_info.components["otterbrix"].libs = ["cpp_otterbrix"]
