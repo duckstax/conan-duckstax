@@ -1,5 +1,5 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.cmake import CMake,CMakeToolchain, CMakeDeps, cmake_layout
 import os
 
 
@@ -7,6 +7,8 @@ class OtterbrixTestConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     generators = "CMakeToolchain", "CMakeDeps"
     test_type = "explicit"
+
+    exports_sources = "CMakeLists.txt", "src/*", "include/*"
 
     def requirements(self):
         self.requires(self.tested_reference_str)
@@ -19,6 +21,13 @@ class OtterbrixTestConan(ConanFile):
 
     def layout(self):
         cmake_layout(self)
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.generate()
+
+        deps = CMakeDeps(self)
+        deps.generate()
 
     def build(self):
         cmake = CMake(self)
