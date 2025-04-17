@@ -57,7 +57,8 @@ class Otterbrix(ConanFile):
         cmake.build()
 
     def package(self):
-        # Заголовки
+        copy(self,"*.hpp", dst=os.path.join(self.package_folder, "include/otterbrix"), src=os.path.join(self.source_folder, "integration/cpp"))
+        copy(self,"*.h", dst=os.path.join(self.package_folder, "include/otterbrix"), src=os.path.join(self.source_folder, "integration/cpp"))
         copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
         copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
 
