@@ -62,21 +62,19 @@ class Otterbrix(ConanFile):
         copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
 
         copy(self, "*.lib", dst="lib", src=self.build_folder, keep_path=False)
-        copy(self, "*.dll", dst="bin", src=self.build_folder, keep_path=False)  # Windows shared library
-        copy(self, "*.so", dst="lib", src=self.build_folder, keep_path=False)  # Linux shared library
-        copy(self, "*.dylib", dst="lib", src=self.build_folder, keep_path=False)  # macOS shared library
-        copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)  # Static library (if needed)
+        copy(self, "*.dll", dst="bin", src=self.build_folder, keep_path=False)
+        copy(self, "*.so", dst="lib", src=self.build_folder, keep_path=False)
+        copy(self, "*.dylib", dst="lib", src=self.build_folder, keep_path=False)
+        copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
         self.cpp_info.set_property("cmake_target_name", "otterbrix::otterbrix")
 
-        self.cpp_info.libs = []  # нет C++ библиотек
-        self.cpp_info.includedirs = []
-        self.cpp_info.libdirs = []
-        self.cpp_info.bindirs = ["bin"]  # .so будет здесь
-
         self.cpp_info.libs = collect_libs(self)
+        self.cpp_info.includedirs = ["include"]
+        self.cpp_info.libdirs = ["lib"]
+
         #self.cpp_info.components["otterbrix"].libs = ["cpp_otterbrix"]
         #self.cpp_info.components["otterbrix"].requires.append("otterbrix_document")
         #self.cpp_info.components["otterbrix"].requires.append("otterbrix_types")
