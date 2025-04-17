@@ -92,6 +92,7 @@ class Otterbrix(ConanFile):
         self.cpp_info.requires.append("pybind11::pybind11")
         self.cpp_info.requires.append("catch2::catch2")
         self.cpp_info.requires.append("benchmark::benchmark")
+        self.cpp_info.includedirs = ["include"]
 
         #self.cpp_info.components["otterbrix"].requires.append("otterbrix_document")
         #self.cpp_info.components["otterbrix"].requires.append("otterbrix_types")
