@@ -56,16 +56,15 @@ class Otterbrix(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
-        copy(self, "*.h", dst=os.path.join(self.package_folder, "include", "otterbrix"), src=os.path.join(self.source_folder, "integration", "cpp"))
+        # Заголовки
         copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
         copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
 
-        copy(self, "*.lib", dst="lib", src=self.build_folder, keep_path=False)
-        copy(self, "*.dll", dst="bin", src=self.build_folder, keep_path=False)
-        copy(self, "*.so", dst="lib", src=self.build_folder, keep_path=False)
-        copy(self, "*.dylib", dst="lib", src=self.build_folder, keep_path=False)
+        # Только C++ библиотеки, игнорируя Python-модули
         copy(self, "*.a", dst="lib", src=self.build_folder, keep_path=False)
+        copy(self, "lib*.so", dst="lib", src=self.build_folder, keep_path=False)
+        copy(self, "lib*.dylib", dst="lib", src=self.build_folder, keep_path=False)
+        copy(self, "*.lib", dst="lib", src=self.build_folder, keep_path=False)
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
