@@ -5,7 +5,6 @@ import os
 
 class OtterbrixTestConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "CMakeToolchain", "CMakeDeps"
     test_type = "explicit"
 
     exports_sources = "CMakeLists.txt", "src/*", "include/*"
