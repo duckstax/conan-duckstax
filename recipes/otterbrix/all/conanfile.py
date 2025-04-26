@@ -25,18 +25,13 @@ class Otterbrix(ConanFile):
     }
 
     def requirements(self):
-        self.requires("boost/1.86.0", force=True)
+        self.requires("boost/1.87.0", force=True)
         self.requires("fmt/11.1.3")
         self.requires("spdlog/1.15.1")
         self.requires("pybind11/2.10.0")
         self.requires("msgpack-cxx/4.1.1")
         self.requires("catch2/2.13.7")
-        self.requires("abseil/20230802.1",
-                headers=True,
-                libs=False,
-                transitive_headers=False,
-                transitive_libs=False,
-                visible=False)
+        self.requires("abseil/20230802.1")
         self.requires("benchmark/1.6.1")
         self.requires("zlib/1.2.12")
         self.requires("bzip2/1.0.8")
@@ -62,70 +57,74 @@ class Otterbrix(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self,"*.hpp", dst=os.path.join(self.package_folder, "include/otterbrix"), src=os.path.join(self.source_folder, "integration/cpp"))
-        copy(self,"*.h", dst=os.path.join(self.package_folder, "include/otterbrix"), src=os.path.join(self.source_folder, "integration/cpp"))
-        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
-        copy(self, "*.h", dst=os.path.join(self.package_folder, "include"), src=self.source_folder)
+        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include/otterbrix"),
+             src=os.path.join(self.source_folder, "integration/cpp"))
+        copy(self, "*.h", dst=os.path.join(self.package_folder, "include/otterbrix"),
+             src=os.path.join(self.source_folder, "integration/cpp"))
+        copy(self, "*.hpp", dst=os.path.join(self.package_folder,
+             "include"), src=self.source_folder)
+        copy(self, "*.h", dst=os.path.join(self.package_folder,
+             "include"), src=self.source_folder)
 
-        copy(self, "*.dll", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path=False)
-        copy(self, "*.lib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.so*", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.dylib", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.dll", src=self.build_folder,
+             dst=os.path.join(self.package_folder, "bin"), keep_path=False)
+        copy(self, "*.lib", src=self.build_folder,
+             dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.a", src=self.build_folder,
+             dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.so*", src=self.build_folder,
+             dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, "*.dylib", src=self.build_folder,
+             dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
         for f in glob(os.path.join(self.package_folder, "lib", "otterbrix.cpython-*.so")):
             os.remove(f)
 
     def package_info(self):
+        # General properties
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
         self.cpp_info.set_property("cmake_target_name", "otterbrix::otterbrix")
-
-        self.cpp_info.libs = collect_libs(self)
         self.cpp_info.includedirs = ["include"]
         self.cpp_info.libdirs = ["lib"]
-        self.cpp_info.requires = []
-        self.cpp_info.requires.append("boost::boost")
-        self.cpp_info.requires.append("abseil::abseil")
-        self.cpp_info.requires.append("actor-zeta::actor-zeta")
-        self.cpp_info.requires.append("magic_enum::magic_enum")
-        self.cpp_info.requires.append("msgpack-cxx::msgpack-cxx")
-        self.cpp_info.requires.append("fmt::fmt")
-        self.cpp_info.requires.append("spdlog::spdlog")
-        self.cpp_info.requires.append("zlib::zlib")
-        self.cpp_info.requires.append("bzip2::bzip2")
-        # TODO: recheck usage by the component
-        self.cpp_info.requires.append("pybind11::pybind11")
-        self.cpp_info.requires.append("catch2::catch2")
-        self.cpp_info.requires.append("benchmark::benchmark")
-        # self.cpp_info.includedirs = ["include"]
 
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_document")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_types")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_cursor")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_session")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_expressions")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_sql")
-        self.cpp_info.components["otterbrix"].requires.append("otterbrix_logical_plan")
-        self.cpp_info.components["otterbrix"].requires.append("boost::boost")
-        self.cpp_info.components["otterbrix"].requires.append("abseil::abseil")
-        self.cpp_info.components["otterbrix"].requires.append("actor-zeta::actor-zeta")
-        self.cpp_info.components["otterbrix"].requires.append("magic_enum::magic_enum")
-        self.cpp_info.components["otterbrix"].requires.append("msgpack-cxx::msgpack-cxx")
-        self.cpp_info.components["otterbrix"].requires.append("fmt::fmt")
-        self.cpp_info.components["otterbrix"].requires.append("spdlog::spdlog")
-        self.cpp_info.components["otterbrix"].requires.append("zlib::zlib")
-        self.cpp_info.components["otterbrix"].requires.append("bzip2::bzip2")
-        # TODO: recheck usage by the component
-        self.cpp_info.components["otterbrix"].requires.append("pybind11::pybind11")
-        self.cpp_info.components["otterbrix"].requires.append("catch2::catch2")
-        self.cpp_info.components["otterbrix"].requires.append("benchmark::benchmark")
-
-        self.cpp_info.components["otterbrix_document"].libs = ["otterbrix_document"]
-        self.cpp_info.components["otterbrix_types"].libs = ["otterbrix_types"]
-        self.cpp_info.components["otterbrix_cursor"].libs = ["otterbrix_cursor"]
-        self.cpp_info.components["otterbrix_session"].libs = ["otterbrix_session"]
-        self.cpp_info.components["otterbrix_expressions"].libs = ["otterbrix_expressions"]
-        self.cpp_info.components["otterbrix_sql"].libs = ["otterbrix_sql"]
-        self.cpp_info.components["otterbrix_logical_plan"].libs = ["otterbrix_logical_plan"]
-
-        self.cpp_info.includedirs = ["include"]
+        # External dependencies
+        common_deps = [
+            "boost::boost", "abseil::abseil", "actor-zeta::actor-zeta",
+            "magic_enum::magic_enum", "msgpack-cxx::msgpack-cxx",
+            "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
+            "pybind11::pybind11", "catch2::catch2", "benchmark::benchmark",
+        ]
+    
+        # Core C++ API library
+        core = self.cpp_info.components["otterbrix_core"]
+        core.libs = ["otterbrix"]
+        core.requires = common_deps
+        core.set_property("cmake_target_name", "otterbrix::core")
+    
+        # C++ wrapper library (this was missing!!!)
+        wrapper = self.cpp_info.components["otterbrix_cpp"]
+        wrapper.libs = ["cpp_otterbrix"]
+        wrapper.requires = ["otterbrix_core"] + common_deps
+        wrapper.set_property("cmake_target_name", "otterbrix::cpp_otterbrix")
+    
+        # Sub-libraries
+        for comp in [
+            "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
+            "otterbrix_session",  "otterbrix_expressions",
+            "otterbrix_logical_plan", "otterbrix_sql",
+        ]:
+            c = self.cpp_info.components[comp]
+            c.libs = [comp]
+            c.requires = ["otterbrix_cpp"] + common_deps
+            c.set_property("cmake_target_name", f"otterbrix::{comp}")
+    
+        # Aggregate (meta) component
+        alias = self.cpp_info.components["otterbrix"]
+        alias.libs = []
+        alias.requires = [
+            "otterbrix_core", "otterbrix_cpp",
+            "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
+            "otterbrix_session", "otterbrix_expressions",
+            "otterbrix_logical_plan", "otterbrix_sql",
+        ]
+        alias.set_property("cmake_target_name", "otterbrix::otterbrix")
