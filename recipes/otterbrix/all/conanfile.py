@@ -111,7 +111,7 @@ class Otterbrix(ConanFile):
         for comp in [
             "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
             "otterbrix_session",  "otterbrix_expressions",
-            "otterbrix_logical_plan", "otterbrix_sql",
+            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization"
         ]:
             c = self.cpp_info.components[comp]
             c.libs = [comp]
@@ -125,6 +125,6 @@ class Otterbrix(ConanFile):
             "otterbrix_core", "otterbrix_cpp",
             "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
             "otterbrix_session", "otterbrix_expressions",
-            "otterbrix_logical_plan", "otterbrix_sql",
+            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization"
         ]
         alias.set_property("cmake_target_name", "otterbrix::otterbrix")
