@@ -101,22 +101,30 @@ class Otterbrix(ConanFile):
         core.requires = common_deps
         core.set_property("cmake_target_name", "otterbrix::core")
 
-        # Components C++ API library
-        c = self.cpp_info.components["otterbrix_components"]
-        c.libs = ["otterbrix"]
-        c.requires = ["otterbrix_core"] + common_deps
-        c.set_property("cmake_target_name", "otterbrix::components")
-
         # C++ wrapper library (this was missing!!!)
         wrapper = self.cpp_info.components["otterbrix_cpp"]
         wrapper.libs = ["cpp_otterbrix"]
-        wrapper.requires = ["otterbrix_core", "otterbrix_components"] + common_deps
+        wrapper.requires = ["otterbrix_core"] + common_deps
         wrapper.set_property("cmake_target_name", "otterbrix::cpp_otterbrix")
+
+        # Sub-libraries
+        for comp in [
+            "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
+            "otterbrix_session",  "otterbrix_expressions",
+            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization"
+        ]:
+            c = self.cpp_info.components[comp]
+            c.libs = [comp]
+            c.requires = ["otterbrix_cpp"] + common_deps
+            c.set_property("cmake_target_name", f"otterbrix::{comp}")
     
         # Aggregate (meta) component
         alias = self.cpp_info.components["otterbrix"]
         alias.libs = []
         alias.requires = [
-            "otterbrix_core", "otterbrix_components", "otterbrix_cpp"
+            "otterbrix_core", "otterbrix_cpp",
+            "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
+            "otterbrix_session", "otterbrix_expressions",
+            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization"
         ]
         alias.set_property("cmake_target_name", "otterbrix::otterbrix")
