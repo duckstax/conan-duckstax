@@ -107,22 +107,6 @@ class Otterbrix(ConanFile):
         wrapper.requires = ["otterbrix_core"] + common_deps
         wrapper.set_property("cmake_target_name", "otterbrix::cpp_otterbrix")
 
-        # Breaking circular dependencies
-        c = self.cpp_info.components["otterbrix_expressions"]
-        c.libs = ["otterbrix"]
-        c.requires = ["otterbrix_cpp", "otterbrix_serialization"] + common_deps
-        c.set_property("cmake_target_name", "otterbrix::expressions")
-
-        c = self.cpp_info.components["otterbrix_serialization"]
-        c.libs = ["otterbrix"]
-        c.requires = ["otterbrix_cpp", "otterbrix_logical_plan", "otterbrix_expressions"] + common_deps
-        c.set_property("cmake_target_name", "otterbrix::serialization")
-
-        c = self.cpp_info.components["otterbrix_logical_plan"]
-        c.libs = ["otterbrix"]
-        c.requires = ["otterbrix_cpp", "otterbrix_serialization", "otterbrix_expressions"] + common_deps
-        c.set_property("cmake_target_name", "otterbrix::logical_plan")
-
         # Sub-libraries
         for comp in [
             "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
