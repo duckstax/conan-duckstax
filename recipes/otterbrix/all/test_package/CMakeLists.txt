@@ -5,7 +5,7 @@ find_package(Arrow REQUIRED)
 find_package(absl REQUIRED)
 find_package(otterbrix REQUIRED)
 find_package(Catch2 2.13.7 REQUIRED)
-find_package(Boost 1.86.0 REQUIRED)
+find_package(Boost 1.87.0 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS charconv)
 find_package(Threads)
 
