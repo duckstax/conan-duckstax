@@ -62,9 +62,9 @@ class Otterbrix(ConanFile):
         copy(self, "*.h", dst=os.path.join(self.package_folder, "include/otterbrix"),
              src=os.path.join(self.source_folder, "integration/cpp"))
         copy(self, "*.hpp", dst=os.path.join(self.package_folder,
-             "include"), src=self.source_folder)
+                                             "include"), src=self.source_folder)
         copy(self, "*.h", dst=os.path.join(self.package_folder,
-             "include"), src=self.source_folder)
+                                           "include"), src=self.source_folder)
 
         copy(self, "*.dll", src=self.build_folder,
              dst=os.path.join(self.package_folder, "bin"), keep_path=False)
@@ -94,7 +94,7 @@ class Otterbrix(ConanFile):
             "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
             "pybind11::pybind11", "catch2::catch2", "benchmark::benchmark",
         ]
-    
+
         # Core C++ API library
         core = self.cpp_info.components["otterbrix_core"]
         core.libs = ["otterbrix"]
@@ -111,13 +111,14 @@ class Otterbrix(ConanFile):
         for comp in [
             "otterbrix_document", "otterbrix_types", "otterbrix_vector",
             "otterbrix_cursor", "otterbrix_session",  "otterbrix_expressions",
-            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization"
+            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization",
+            "otterbrix_table", "otterbrix_catalog"
         ]:
             c = self.cpp_info.components[comp]
             c.libs = [comp]
             c.requires = ["otterbrix_cpp"] + common_deps
             c.set_property("cmake_target_name", f"otterbrix::{comp}")
-    
+
         # Aggregate (meta) component
         alias = self.cpp_info.components["otterbrix"]
         alias.libs = []
@@ -125,6 +126,7 @@ class Otterbrix(ConanFile):
             "otterbrix_core", "otterbrix_cpp",
             "otterbrix_document", "otterbrix_types", "otterbrix_vector",
             "otterbrix_cursor", "otterbrix_session", "otterbrix_expressions",
-            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization"
+            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization",
+            "otterbrix_table", "otterbrix_catalog"
         ]
         alias.set_property("cmake_target_name", "otterbrix::otterbrix")
