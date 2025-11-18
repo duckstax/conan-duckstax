@@ -1,5 +1,5 @@
 sources:
   "1.0.0a10-rc-10":
     url: "https://github.com/duckstax/otterbrix/archive/refs/tags/1.0.0a10-rc-10.tar.gz"
-    sha256: "f1f63b16b4f63a46cf3c1e75aaa2864d0df09a6c5c850dfcd10d1928064a87ae"
+    sha256: ""
 patches:
