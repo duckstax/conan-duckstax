@@ -1,0 +1,83 @@
+name: Conan Build & Upload
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      force_upload:
+        description: 'Force upload to remote'
+        required: false
+        default: 'false'
+        type: boolean
+      packages:
+        description: 'Packages to build (comma-separated, e.g. actor-zeta,otterbrix)'
+        required: false
+        default: 'all'
+        type: string
+
+env:
+  CONAN_REMOTE: otterbrix
+
+jobs:
+  build-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-13, macos-14]
+        cxx_standard: [17, 20]
+        build_type: [Release]
+        include:
+          - os: ubuntu-22.04
+            compiler: gcc
+            compiler_version: 11
+          - os: macos-13
+            compiler: apple-clang
+            compiler_version: 14
+          - os: macos-14
+            compiler: apple-clang
+            compiler_version: 15
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Conan
+        run: |
+          pip install conan
+          conan profile detect --force
+
+      - name: Configure Conan remote
+        run: |
+          conan remote add ${{ env.CONAN_REMOTE }} ${{ secrets.CONAN_REMOTE_URL }} --force || true
+          conan remote login ${{ env.CONAN_REMOTE }} ${{ secrets.CONAN_USER }} -p ${{ secrets.CONAN_PASSWORD }}
+
+      - name: Build actor-zeta
+        run: |
+          conan create recipes/actor-zeta/all \
+            --version=1.0.0a12 \
+            --build=missing \
+            -o "actor-zeta/*:cxx_standard=${{ matrix.cxx_standard }}" \
+            -s build_type=${{ matrix.build_type }}
+
+      - name: Build otterbrix
+        run: |
+          conan create recipes/otterbrix/all \
+            --version=1.0.0a10-rc-5 \
+            --build=missing \
+            -o "actor-zeta/*:cxx_standard=${{ matrix.cxx_standard }}" \
+            -s build_type=${{ matrix.build_type }}
+
+      - name: Upload packages
+        if: github.ref == 'refs/heads/master' || github.event.inputs.force_upload == 'true'
+        run: |
+          conan upload "actor-zeta/1.0.0a12:*" -r=${{ env.CONAN_REMOTE }} --confirm
+          conan upload "otterbrix/1.0.0a10-rc-5:*" -r=${{ env.CONAN_REMOTE }} --confirm
