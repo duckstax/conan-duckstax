@@ -21,7 +21,7 @@ class ActorZetaConan(ConanFile):
         "fPIC": [True, False],
         "exceptions_disable": [True, False],
         "rtti_disable": [True, False],
-        "cxx_standard": [20],
+        "cxx_standard": [17,20],
     }
 
     default_options = {
