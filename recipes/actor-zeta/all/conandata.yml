@@ -31,6 +31,10 @@ sources:
     url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a12.tar.gz"
     sha256: "8f2d0ca36ee43944a5c76174077405b200e5b358addc60602df1fe1e095e9277"
 
+  "1.0.0":
+    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0.tar.gz"
+    sha256: "38410a756f37227ee539ec32bfc07d2eadab660d05d45aee2e8ecfc399da74fe"
+
 patches:
   "1.0.0a8":
     - patch_file: "patches/cmakelist_1_0_0a8_update.patch"
