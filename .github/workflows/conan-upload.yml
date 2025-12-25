@@ -56,9 +56,17 @@ jobs:
           conan profile detect --force
 
       - name: Configure Conan remote
+        env:
+          CONAN_REMOTE_URL: ${{ secrets.CONAN_REMOTE_URL }}
+          CONAN_USER: ${{ secrets.CONAN_USER }}
+          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         run: |
-          conan remote add ${{ env.CONAN_REMOTE }} ${{ secrets.CONAN_REMOTE_URL }} --force || true
-          conan remote login ${{ env.CONAN_REMOTE }} ${{ secrets.CONAN_USER }} -p ${{ secrets.CONAN_PASSWORD }}
+          if [ -n "$CONAN_REMOTE_URL" ]; then
+            conan remote add ${{ env.CONAN_REMOTE }} "$CONAN_REMOTE_URL" --force || true
+            conan remote login ${{ env.CONAN_REMOTE }} "$CONAN_USER" -p "$CONAN_PASSWORD"
+          else
+            echo "::warning::CONAN_REMOTE_URL not set, skipping remote configuration"
+          fi
 
       - name: Build actor-zeta
         run: |
@@ -77,7 +85,13 @@ jobs:
             -s build_type=${{ matrix.build_type }}
 
       - name: Upload packages
-        if: github.ref == 'refs/heads/master' || github.event.inputs.force_upload == 'true'
+        if: (github.ref == 'refs/heads/master' || github.event.inputs.force_upload == 'true') && secrets.CONAN_REMOTE_URL != ''
+        env:
+          CONAN_REMOTE_URL: ${{ secrets.CONAN_REMOTE_URL }}
         run: |
-          conan upload "actor-zeta/1.0.0a12:*" -r=${{ env.CONAN_REMOTE }} --confirm
-          conan upload "otterbrix/1.0.0a10-rc-5:*" -r=${{ env.CONAN_REMOTE }} --confirm
+          if [ -n "$CONAN_REMOTE_URL" ]; then
+            conan upload "actor-zeta/1.0.0a12:*" -r=${{ env.CONAN_REMOTE }} --confirm
+            conan upload "otterbrix/1.0.0a10-rc-5:*" -r=${{ env.CONAN_REMOTE }} --confirm
+          else
+            echo "::warning::CONAN_REMOTE_URL not set, skipping upload"
+          fi
