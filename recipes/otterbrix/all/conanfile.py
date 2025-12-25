@@ -18,7 +18,7 @@ class Otterbrix(ConanFile):
 
     default_options = {
         "shared": True,
-        "actor-zeta/*:cxx_standard": 17,
+        "actor-zeta/*:cxx_standard": 20,
         "actor-zeta/*:fPIC": True,
         "actor-zeta/*:exceptions_disable": False,
         "actor-zeta/*:rtti_disable": False,
@@ -94,7 +94,7 @@ class Otterbrix(ConanFile):
             "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
             "pybind11::pybind11", "catch2::catch2", "benchmark::benchmark",
         ]
-    
+
         # Core C++ API library
         core = self.cpp_info.components["otterbrix_core"]
         core.libs = ["otterbrix"]
@@ -117,7 +117,7 @@ class Otterbrix(ConanFile):
             c.libs = [comp]
             c.requires = ["otterbrix_cpp"] + common_deps
             c.set_property("cmake_target_name", f"otterbrix::{comp}")
-    
+
         # Aggregate (meta) component
         alias = self.cpp_info.components["otterbrix"]
         alias.libs = []
