@@ -196,6 +196,7 @@ def upload_package(package_name: str, version: str) -> bool:
     """Upload package to remote if CONAN_REMOTE_URL is set."""
     remote_url = os.environ.get("CONAN_REMOTE_URL", "")
     if not remote_url:
+        print(f"  Skipping upload {package_name}/{version}: CONAN_REMOTE_URL not set")
         return True
 
     cmd = [
@@ -309,6 +310,18 @@ def main():
 
     args = parser.parse_args()
     do_upload = args.upload.lower() == "true"
+
+    # Diagnostics
+    remote_url = os.environ.get("CONAN_REMOTE_URL", "")
+    print(f"\n{'='*60}")
+    print("CONFIGURATION")
+    print(f"{'='*60}")
+    print(f"  --upload flag: {args.upload}")
+    print(f"  do_upload: {do_upload}")
+    print(f"  CONAN_REMOTE_URL set: {bool(remote_url)}")
+    if remote_url:
+        print(f"  CONAN_REMOTE_URL: {remote_url[:20]}...")
+    print(f"{'='*60}\n")
 
     # Get filters from environment
     package_filter = os.environ.get("PACKAGE_FILTER", "").strip() or None
