@@ -114,7 +114,9 @@ jobs:
           # Generate matrix using conan graph info for validation
           MATRIX=$(python scripts/generate_matrix.py $ARGS --output json)
 
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          # Output as single line for GitHub Actions
+          echo "matrix=$(echo "$MATRIX" | jq -c .)" >> $GITHUB_OUTPUT
+
           echo "Generated matrix:"
           echo "$MATRIX" | jq .
 
