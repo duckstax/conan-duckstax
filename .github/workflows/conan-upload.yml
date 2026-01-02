@@ -117,8 +117,8 @@ jobs:
           conan remote add conancenter https://center2.conan.io --force || true
 
           if [ -n "$CONAN_REMOTE_URL" ]; then
-            conan remote add upload "$CONAN_REMOTE_URL" --force || true
-            conan remote login upload "$CONAN_USER" -p "$CONAN_PASSWORD"
+            conan remote add otterbrix "$CONAN_REMOTE_URL" --force || true
+            conan remote login otterbrix "$CONAN_USER" -p "$CONAN_PASSWORD"
           fi
 
       - name: Build all packages in dependency order

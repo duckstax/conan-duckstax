@@ -201,7 +201,7 @@ def upload_package(package_name: str, version: str) -> bool:
     cmd = [
         "conan", "upload",
         f"{package_name}/{version}:*",
-        "-r=upload",
+        "-r=otterbrix",
         "--confirm",
     ]
 
