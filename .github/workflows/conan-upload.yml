@@ -1,5 +1,8 @@
 name: Build & Upload
 
+env:
+  CONAN_REMOTE: otterbrix
+
 on:
   push:
     branches: [master]
@@ -7,6 +10,11 @@ on:
     branches: [master]
   workflow_dispatch:
     inputs:
+      force_upload:
+        description: 'Force upload to remote'
+        required: false
+        default: false
+        type: boolean
       package:
         description: 'Package to build (empty = all)'
         required: false
@@ -117,8 +125,8 @@ jobs:
           conan remote add conancenter https://center2.conan.io --force || true
 
           if [ -n "$CONAN_REMOTE_URL" ]; then
-            conan remote add otterbrix "$CONAN_REMOTE_URL" --force || true
-            conan remote login otterbrix "$CONAN_USER" -p "$CONAN_PASSWORD"
+            conan remote add ${{ env.CONAN_REMOTE }} "$CONAN_REMOTE_URL" --force || true
+            conan remote login ${{ env.CONAN_REMOTE }} "$CONAN_USER" -p "$CONAN_PASSWORD"
           fi
 
       - name: Build all packages in dependency order
@@ -128,4 +136,4 @@ jobs:
           VERSION_FILTER: ${{ github.event.inputs.version }}
         run: |
           python scripts/build_packages.py recipes/ \
-            --upload=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+            --upload=${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event.inputs.force_upload == 'true' }}
