@@ -16,6 +16,9 @@ class ActorZetaTestConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        # Get cxx_standard from tested package
+        cxx_std = self.dependencies[self.tested_reference_str].options.cxx_standard
+        tc.variables["CMAKE_CXX_STANDARD"] = cxx_std
         tc.generate()
 
     def build(self):

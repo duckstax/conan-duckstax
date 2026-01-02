@@ -17,7 +17,7 @@ from pathlib import Path
 import yaml
 
 # Default matrix parameters
-DEFAULT_OS_LIST = ["ubuntu-22.04", "macos-13", "macos-14"]
+DEFAULT_OS_LIST = ["ubuntu-22.04", "macos-14", "macos-15"]
 DEFAULT_CXX_STANDARDS = [17, 20]
 DEFAULT_BUILD_TYPE = "Release"
 

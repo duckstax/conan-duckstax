@@ -5,4 +5,4 @@ find_package(actor-zeta REQUIRED CONFIG)
 
 add_executable(test_package test.cpp)
 target_link_libraries(test_package PRIVATE actor-zeta::actor-zeta)
-target_compile_features(test_package PRIVATE cxx_std_17)
+# CMAKE_CXX_STANDARD is set by conanfile.py from tested package options
