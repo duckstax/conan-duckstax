@@ -1,0 +1,5 @@
+# JSON Schema for config.yml (yamale format)
+versions: map(include('version_entry'))
+---
+version_entry:
+  folder: str()

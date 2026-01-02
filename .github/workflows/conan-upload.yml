@@ -1,4 +1,4 @@
-name: Conan Build & Upload
+name: Build & Upload
 
 on:
   push:
@@ -7,41 +7,22 @@ on:
     branches: [master]
   workflow_dispatch:
     inputs:
-      force_upload:
-        description: 'Force upload to remote'
+      package:
+        description: 'Package to build (empty = all)'
         required: false
-        default: 'false'
-        type: boolean
-      packages:
-        description: 'Packages to build (comma-separated, e.g. actor-zeta,otterbrix)'
+        type: string
+      version:
+        description: 'Version to build (empty = latest)'
         required: false
-        default: 'all'
         type: string
 
-env:
-  CONAN_REMOTE: otterbrix
-
 jobs:
-  build-matrix:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, macos-13, macos-14]
-        cxx_standard: [17, 20]
-        build_type: [Release]
-        include:
-          - os: ubuntu-22.04
-            compiler: gcc
-            compiler_version: 11
-          - os: macos-13
-            compiler: apple-clang
-            compiler_version: 14
-          - os: macos-14
-            compiler: apple-clang
-            compiler_version: 15
-
-    runs-on: ${{ matrix.os }}
-
+  # ============================================
+  # Stage 1: Lint
+  # ============================================
+  yaml-lint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -50,48 +31,101 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Conan
-        run: |
-          pip install conan
-          conan profile detect --force
+      - name: Install yamllint
+        run: pip install yamllint
 
-      - name: Configure Conan remote
+      - name: Run YAML lint
+        run: yamllint -c linter/.yamllint.yml recipes/
+
+  validate-recipes:
+    name: Validate Recipes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r linter/requirements.txt
+
+      - name: Validate recipes
+        run: python linter/check_recipes.py recipes/
+
+  python-lint:
+    name: Python Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pylint
+        run: pip install pylint conan
+
+      - name: Lint conanfile.py
+        run: |
+          find recipes -name "conanfile.py" | xargs pylint \
+            --disable=all \
+            --enable=E0001,E0100,E0101,E0102,E0103,E0104,E0105,E0107,E0108 \
+            --exit-zero
+
+  # ============================================
+  # Stage 2: Build all packages (per OS)
+  # ============================================
+  build:
+    name: Build (${{ matrix.os }})
+    needs: [yaml-lint, validate-recipes, python-lint]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, macos-15]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install and setup Conan
+        uses: conan-io/setup-conan@v1
+        with:
+          version: "2.14.0"
+          cache_packages: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Configure Conan
         env:
           CONAN_REMOTE_URL: ${{ secrets.CONAN_REMOTE_URL }}
           CONAN_USER: ${{ secrets.CONAN_USER }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         run: |
+          conan profile detect --force
+
+          # Ensure conancenter is available for pre-built dependencies
+          conan remote add conancenter https://center2.conan.io --force || true
+
           if [ -n "$CONAN_REMOTE_URL" ]; then
-            conan remote add ${{ env.CONAN_REMOTE }} "$CONAN_REMOTE_URL" --force || true
-            conan remote login ${{ env.CONAN_REMOTE }} "$CONAN_USER" -p "$CONAN_PASSWORD"
-          else
-            echo "::warning::CONAN_REMOTE_URL not set, skipping remote configuration"
+            conan remote add otterbrix "$CONAN_REMOTE_URL" --force || true
+            conan remote login otterbrix "$CONAN_USER" -p "$CONAN_PASSWORD"
           fi
 
-      - name: Build actor-zeta
-        run: |
-          conan create recipes/actor-zeta/all \
-            --version=1.0.0a12 \
-            --build=missing \
-            -o "actor-zeta/*:cxx_standard=${{ matrix.cxx_standard }}" \
-            -s build_type=${{ matrix.build_type }}
-
-      - name: Build otterbrix
-        run: |
-          conan create recipes/otterbrix/all \
-            --version=1.0.0a10-rc-5 \
-            --build=missing \
-            -o "actor-zeta/*:cxx_standard=${{ matrix.cxx_standard }}" \
-            -s build_type=${{ matrix.build_type }}
-
-      - name: Upload packages
-        if: (github.ref == 'refs/heads/master' || github.event.inputs.force_upload == 'true') && secrets.CONAN_REMOTE_URL != ''
+      - name: Build all packages in dependency order
         env:
           CONAN_REMOTE_URL: ${{ secrets.CONAN_REMOTE_URL }}
+          PACKAGE_FILTER: ${{ github.event.inputs.package }}
+          VERSION_FILTER: ${{ github.event.inputs.version }}
         run: |
-          if [ -n "$CONAN_REMOTE_URL" ]; then
-            conan upload "actor-zeta/1.0.0a12:*" -r=${{ env.CONAN_REMOTE }} --confirm
-            conan upload "otterbrix/1.0.0a10-rc-5:*" -r=${{ env.CONAN_REMOTE }} --confirm
-          else
-            echo "::warning::CONAN_REMOTE_URL not set, skipping upload"
-          fi
+          python scripts/build_packages.py recipes/ \
+            --upload=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
