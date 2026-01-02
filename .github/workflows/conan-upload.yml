@@ -124,7 +124,7 @@ jobs:
   # Stage 3: Build (only valid combinations)
   # ============================================
   build:
-    name: ${{ matrix.name }}/${{ matrix.version }} (${{ matrix.os }}, C++${{ matrix.cxx_standard }})
+    name: ${{ matrix.name }}/${{ matrix.version }} (${{ matrix.os }}${{ matrix.cxx_standard && format(', C++{0}', matrix.cxx_standard) || '' }})
     needs: generate-matrix
     if: ${{ needs.generate-matrix.outputs.matrix != '[]' && needs.generate-matrix.outputs.matrix != '' }}
     strategy:
@@ -156,12 +156,22 @@ jobs:
             conan remote login upload "$CONAN_USER" -p "$CONAN_PASSWORD"
           fi
 
+      - name: Export all local recipes
+        run: |
+          # Export all recipes so dependencies can be built from source
+          python scripts/export_recipes.py recipes/
+
       - name: Build ${{ matrix.name }}
         run: |
+          OPTIONS=""
+          if [ -n "${{ matrix.cxx_standard }}" ]; then
+            OPTIONS="-o ${{ matrix.name }}/*:cxx_standard=${{ matrix.cxx_standard }}"
+          fi
+
           conan create recipes/${{ matrix.name }}/all \
             --version="${{ matrix.version }}" \
             --build=missing \
-            -o "${{ matrix.name }}/*:cxx_standard=${{ matrix.cxx_standard }}" \
+            $OPTIONS \
             -s build_type=${{ matrix.build_type }}
 
       - name: Upload ${{ matrix.name }}
