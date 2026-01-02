@@ -113,6 +113,9 @@ jobs:
         run: |
           conan profile detect --force
 
+          # Ensure conancenter is available for pre-built dependencies
+          conan remote add conancenter https://center2.conan.io --force || true
+
           if [ -n "$CONAN_REMOTE_URL" ]; then
             conan remote add upload "$CONAN_REMOTE_URL" --force || true
             conan remote login upload "$CONAN_USER" -p "$CONAN_PASSWORD"
