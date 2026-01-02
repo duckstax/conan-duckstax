@@ -291,7 +291,8 @@ def generate_matrix(
             if has_cxx_standard:
                 available_standards = options.get("cxx_standard", [])
                 if available_standards:
-                    test_standards = [int(s) for s in available_standards if int(s) in cxx_standards]
+                    # Options can be strings or ints, normalize to int for comparison
+                    test_standards = [int(str(s)) for s in available_standards if int(str(s)) in cxx_standards]
                 else:
                     test_standards = cxx_standards
             else:

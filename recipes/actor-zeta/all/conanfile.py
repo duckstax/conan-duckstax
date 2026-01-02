@@ -22,7 +22,7 @@ class ActorZetaConan(ConanFile):
         "fPIC": [True, False],
         "exceptions_disable": [True, False],
         "rtti_disable": [True, False],
-        "cxx_standard": [17, 20],
+        "cxx_standard": ["17", "20"],
     }
 
     default_options = {
@@ -30,7 +30,7 @@ class ActorZetaConan(ConanFile):
         "fPIC": False,
         "exceptions_disable": False,
         "rtti_disable": False,
-        "cxx_standard": 20,
+        "cxx_standard": "20",
     }
 
     def export_sources(self):
@@ -65,7 +65,7 @@ class ActorZetaConan(ConanFile):
         tc.variables["EXCEPTIONS_DISABLE"] = self.options.get_safe("exceptions_disable")
         tc.variables["RTTI_DISABLE"] = self.options.get_safe("rtti_disable")
         tc.variables["SHARED"] = self.options.get_safe("shared")
-        tc.variables["CMAKE_CXX_STANDARD"] = self.options.get_safe("cxx_standard")
+        tc.variables["CMAKE_CXX_STANDARD"] = int(str(self.options.cxx_standard))
         tc.generate()
 
     def build(self):

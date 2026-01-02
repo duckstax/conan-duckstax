@@ -76,61 +76,15 @@ jobs:
             --exit-zero
 
   # ============================================
-  # Stage 2: Generate valid build matrix
-  # ============================================
-  generate-matrix:
-    name: Generate matrix
-    runs-on: ubuntu-latest
-    needs: [yaml-lint, validate-recipes, python-lint]
-    outputs:
-      matrix: ${{ steps.generate.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install pyyaml conan
-
-      - name: Setup Conan
-        run: conan profile detect --force
-
-      - name: Generate build matrix
-        id: generate
-        run: |
-          ARGS="recipes"
-
-          if [ -n "${{ github.event.inputs.package }}" ]; then
-            ARGS="$ARGS --package ${{ github.event.inputs.package }}"
-          fi
-
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            ARGS="$ARGS --version ${{ github.event.inputs.version }}"
-          fi
-
-          # Generate matrix using conan graph info for validation
-          MATRIX=$(python scripts/generate_matrix.py $ARGS --output json)
-
-          # Output as single line for GitHub Actions
-          echo "matrix=$(echo "$MATRIX" | jq -c .)" >> $GITHUB_OUTPUT
-
-          echo "Generated matrix:"
-          echo "$MATRIX" | jq .
-
-  # ============================================
-  # Stage 3: Build (only valid combinations)
+  # Stage 2: Build all packages (per OS)
   # ============================================
   build:
-    name: ${{ matrix.name }}/${{ matrix.version }} (${{ matrix.os }}${{ matrix.cxx_standard && format(', C++{0}', matrix.cxx_standard) || '' }})
-    needs: generate-matrix
-    if: ${{ needs.generate-matrix.outputs.matrix != '[]' && needs.generate-matrix.outputs.matrix != '' }}
+    name: Build (${{ matrix.os }})
+    needs: [yaml-lint, validate-recipes, python-lint]
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+        os: [ubuntu-22.04, macos-14, macos-15]
 
     runs-on: ${{ matrix.os }}
 
@@ -142,6 +96,14 @@ jobs:
         with:
           version: "2.14.0"
           cache_packages: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
 
       - name: Configure Conan
         env:
@@ -156,30 +118,11 @@ jobs:
             conan remote login upload "$CONAN_USER" -p "$CONAN_PASSWORD"
           fi
 
-      - name: Export all local recipes
-        run: |
-          # Export all recipes so dependencies can be built from source
-          python scripts/export_recipes.py recipes/
-
-      - name: Build ${{ matrix.name }}
-        run: |
-          OPTIONS=""
-          if [ -n "${{ matrix.cxx_standard }}" ]; then
-            OPTIONS="-o ${{ matrix.name }}/*:cxx_standard=${{ matrix.cxx_standard }}"
-          fi
-
-          conan create recipes/${{ matrix.name }}/all \
-            --version="${{ matrix.version }}" \
-            --build=missing \
-            $OPTIONS \
-            -s build_type=${{ matrix.build_type }}
-
-      - name: Upload ${{ matrix.name }}
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      - name: Build all packages in dependency order
         env:
           CONAN_REMOTE_URL: ${{ secrets.CONAN_REMOTE_URL }}
+          PACKAGE_FILTER: ${{ github.event.inputs.package }}
+          VERSION_FILTER: ${{ github.event.inputs.version }}
         run: |
-          if [ -n "$CONAN_REMOTE_URL" ]; then
-            conan upload "${{ matrix.name }}/${{ matrix.version }}:*" \
-              -r=upload --confirm || true
-          fi
+          python scripts/build_packages.py recipes/ \
+            --upload=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
