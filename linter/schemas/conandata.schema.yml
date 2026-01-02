@@ -1,0 +1,12 @@
+# JSON Schema for conandata.yml (yamale format)
+sources: map(include('source_entry'))
+patches: map(list(include('patch_entry')), required=False)
+---
+source_entry:
+  url: str()
+  sha256: str(min=64, max=64)
+---
+patch_entry:
+  patch_file: str()
+  patch_description: str(required=False)
+  patch_type: str(required=False)

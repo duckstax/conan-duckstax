@@ -1,47 +1,8 @@
 sources:
-  "1.0.0a5":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a5.tar.gz"
-    sha256: "19a417884a5fbec0f475924dd27d38407f32698385da40e631a059749797e91d"
-
-  "1.0.0a6":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a6.tar.gz"
-    sha256: "cf6bd4d4bc083367d08fb6db1657479e7c34da7e82ddad2ceaae1876d20cac17"
-
-  "1.0.0a7":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a7.tar.gz"
-    sha256: "ba80f4a8f89872c444bc0cad8143ea0a9d441faef4af791dc860ae8d534ae1c5"
-
-  "1.0.0a8":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a8.tar.gz"
-    sha256: "6f3d2db94c8a050e29e32fec7b0801494442df44002206be6c2b510331489ff1"
-
-  "1.0.0a9":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a9.tar.gz"
-    sha256: "817f0aa8416d3f1e6051167643cdcc3bf8bcc0f9e53c4185c7f6f7b9e228df56"
-
-  "1.0.0a10":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a10.tar.gz"
-    sha256: "1c60a181f8aaff9076de6fdb0ae42610f833dc6ff72a261bfd783d83502c61cf"
-
-  "1.0.0a11":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a11.tar.gz"
-    sha256: "2ec5f99ad410492c3b574a97d8fdff8471913de3a9e3779ff97ba9815d32869a"
+  "1.1.0":
+    url: "https://github.com/duckstax/actor-zeta/archive/1.1.0.tar.gz"
+    sha256: "5510c6cb3250f6403aed80c5919569486bed6b7d44f2b2d1c7f0a961d6ccbc6e"
 
   "1.0.0a12":
     url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a12.tar.gz"
     sha256: "8f2d0ca36ee43944a5c76174077405b200e5b358addc60602df1fe1e095e9277"
-
-  "1.0.0":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0.tar.gz"
-    sha256: "38410a756f37227ee539ec32bfc07d2eadab660d05d45aee2e8ecfc399da74fe"
-
-patches:
-  "1.0.0a8":
-    - patch_file: "patches/cmakelist_1_0_0a8_update.patch"
-      patch_description: "Update CMakeList.txt for building 1.0.0a8 ver"
-      patch_type: "conan"
-
-  "1.0.0a9":
-    - patch_file: "patches/cmakelist_1_0_0a9_update.patch"
-      patch_description: "Update CMakeList.txt for building 1.0.0a9 ver"
-      patch_type: "conan"
