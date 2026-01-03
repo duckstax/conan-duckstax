@@ -2,6 +2,7 @@ name: Build & Upload
 
 env:
   CONAN_REMOTE: otterbrix
+  CONAN_REMOTE_URL: http://conan.otterbrix.com
 
 on:
   push:
@@ -115,8 +116,7 @@ jobs:
 
       - name: Configure Conan
         env:
-          CONAN_REMOTE_URL: ${{ secrets.CONAN_REMOTE_URL }}
-          CONAN_USER: ${{ secrets.CONAN_USER }}
+          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_LOGIN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         run: |
           conan profile detect --force
@@ -124,14 +124,12 @@ jobs:
           # Ensure conancenter is available for pre-built dependencies
           conan remote add conancenter https://center2.conan.io --force || true
 
-          if [ -n "$CONAN_REMOTE_URL" ]; then
-            conan remote add ${{ env.CONAN_REMOTE }} "$CONAN_REMOTE_URL" --force || true
-            conan remote login ${{ env.CONAN_REMOTE }} "$CONAN_USER" -p "$CONAN_PASSWORD"
-          fi
+          # Add otterbrix remote
+          conan remote add ${{ env.CONAN_REMOTE }} ${{ env.CONAN_REMOTE_URL }} --force || true
+          conan remote login ${{ env.CONAN_REMOTE }} "$CONAN_LOGIN_USERNAME" -p "$CONAN_PASSWORD"
 
       - name: Build all packages in dependency order
         env:
-          CONAN_REMOTE_URL: ${{ secrets.CONAN_REMOTE_URL }}
           PACKAGE_FILTER: ${{ github.event.inputs.package }}
           VERSION_FILTER: ${{ github.event.inputs.version }}
         run: |
