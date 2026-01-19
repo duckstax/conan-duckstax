@@ -26,4 +26,6 @@ target_link_libraries(test_package
     absl::flat_hash_map
     absl::node_hash_map
     msgpackc-cxx
+    BISON::bison
+    FLEX::flex
 )
