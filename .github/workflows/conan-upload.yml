@@ -111,6 +111,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install system dependencies
+        run: sudo apt update && sudo apt install -y flex bison
+
       - name: Install dependencies
         run: pip install pyyaml
 
