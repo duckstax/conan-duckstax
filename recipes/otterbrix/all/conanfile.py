@@ -46,8 +46,14 @@ class Otterbrix(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0148"] = "OLD"
         tc.generate()
+
+        # Set CMP0148=OLD so pybind11 2.10 can use legacy FindPythonInterp
+        toolchain_file = os.path.join(self.generators_folder, "conan_toolchain.cmake")
+        content = load(self, toolchain_file)
+        policy_line = 'set(CMAKE_POLICY_DEFAULT_CMP0148 OLD)\n'
+        if policy_line not in content:
+            save(self, toolchain_file, policy_line + content)
 
         deps = CMakeDeps(self)
         deps.generate()
