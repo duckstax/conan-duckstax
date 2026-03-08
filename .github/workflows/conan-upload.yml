@@ -111,6 +111,10 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Python dev
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y python3-dev
+
       - name: Install dependencies
         run: pip install pyyaml
 

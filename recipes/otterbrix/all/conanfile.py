@@ -3,6 +3,7 @@ from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
 from conan.tools.files import copy, get, rmdir, save, load, collect_libs
 import os
 from glob import glob
+import shutil
 
 
 class Otterbrix(ConanFile):
@@ -46,6 +47,13 @@ class Otterbrix(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+
+        # Help pybind11 2.10 find Python (it uses legacy FindPythonInterp
+        # which was removed in CMake >= 3.27)
+        python_path = shutil.which("python3") or shutil.which("python")
+        if python_path:
+            tc.variables["PYTHON_EXECUTABLE"] = python_path
+
         tc.generate()
 
         # Set CMP0148=OLD so pybind11 2.10 can use legacy FindPythonInterp
