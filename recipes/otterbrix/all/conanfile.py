@@ -1,9 +1,8 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
-from conan.tools.files import copy, get, rmdir, save, load, collect_libs
+from conan.tools.files import copy, get, rmdir, save, load, collect_libs, apply_conandata_patches, export_conandata_patches
 import os
 from glob import glob
-import shutil
 
 
 class Otterbrix(ConanFile):
@@ -14,6 +13,7 @@ class Otterbrix(ConanFile):
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
     exports = ["LICENSE.md"]
+    exports_sources = ["patches/*"]
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}  # Enable shared/static options
 
@@ -47,26 +47,13 @@ class Otterbrix(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-
-        # Help pybind11 2.10 find Python (it uses legacy FindPythonInterp
-        # which was removed in CMake >= 3.27)
-        python_path = shutil.which("python3") or shutil.which("python")
-        if python_path:
-            tc.variables["PYTHON_EXECUTABLE"] = python_path
-
         tc.generate()
-
-        # Set CMP0148=OLD so pybind11 2.10 can use legacy FindPythonInterp
-        toolchain_file = os.path.join(self.generators_folder, "conan_toolchain.cmake")
-        content = load(self, toolchain_file)
-        policy_line = 'set(CMAKE_POLICY_DEFAULT_CMP0148 OLD)\n'
-        if policy_line not in content:
-            save(self, toolchain_file, policy_line + content)
 
         deps = CMakeDeps(self)
         deps.generate()
 
     def build(self):
+        apply_conandata_patches(self)
         cmake = CMake(self)
         cmake.configure()
         cmake.build()

@@ -6,3 +6,7 @@ sources:
     url: "https://github.com/duckstax/otterbrix/archive/refs/tags/1.0.0a10-rc-10.tar.gz"
     sha256: "63ae484a1c7b7c82661f59004ee0d4e9420de81e47c08a1a776942c116fea4ac"
 patches:
+  "1.0.0a10-rc-10":
+    - patch_file: "patches/fix-pybind11-cmake327-rc10.patch"
+      patch_description: "Fix pybind11 2.10 FindPythonInterp removed in CMake >= 3.27"
+      patch_type: "portability"
