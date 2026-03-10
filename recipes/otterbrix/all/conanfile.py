@@ -1,6 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
-from conan.tools.files import copy, get, rmdir, save, load, collect_libs, apply_conandata_patches, export_conandata_patches
+from conan.tools.files import copy, get, rmdir, save, load, collect_libs
 import os
 from glob import glob
 
@@ -13,13 +13,12 @@ class Otterbrix(ConanFile):
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
     exports = ["LICENSE.md"]
-    exports_sources = ["patches/*"]
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}  # Enable shared/static options
 
     default_options = {
         "shared": True,
-        "actor-zeta/*:cxx_standard": 20,
+        "actor-zeta/*:cxx_standard": 17,
         "actor-zeta/*:fPIC": True,
         "actor-zeta/*:exceptions_disable": False,
         "actor-zeta/*:rtti_disable": False,
@@ -29,12 +28,12 @@ class Otterbrix(ConanFile):
         self.requires("boost/1.87.0", force=True)
         self.requires("fmt/11.1.3")
         self.requires("spdlog/1.15.1")
-        self.requires("pybind11/2.10.0")
+        self.requires("pybind11/2.13.6")
         self.requires("msgpack-cxx/4.1.1")
         self.requires("catch2/2.13.7")
         self.requires("abseil/20230802.1")
         self.requires("benchmark/1.6.1")
-        self.requires("zlib/1.2.12")
+        self.requires("zlib/1.3.1")
         self.requires("bzip2/1.0.8")
         self.requires("magic_enum/0.8.1")
         self.requires("actor-zeta/1.0.0a12")
@@ -53,7 +52,6 @@ class Otterbrix(ConanFile):
         deps.generate()
 
     def build(self):
-        apply_conandata_patches(self)
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
@@ -64,9 +62,9 @@ class Otterbrix(ConanFile):
         copy(self, "*.h", dst=os.path.join(self.package_folder, "include/otterbrix"),
              src=os.path.join(self.source_folder, "integration/cpp"))
         copy(self, "*.hpp", dst=os.path.join(self.package_folder,
-             "include"), src=self.source_folder)
+                                             "include"), src=self.source_folder)
         copy(self, "*.h", dst=os.path.join(self.package_folder,
-             "include"), src=self.source_folder)
+                                           "include"), src=self.source_folder)
 
         copy(self, "*.dll", src=self.build_folder,
              dst=os.path.join(self.package_folder, "bin"), keep_path=False)
@@ -111,9 +109,10 @@ class Otterbrix(ConanFile):
 
         # Sub-libraries
         for comp in [
-            "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
-            "otterbrix_session",  "otterbrix_expressions",
-            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization"
+            "otterbrix_document", "otterbrix_types", "otterbrix_vector",
+            "otterbrix_cursor", "otterbrix_session",  "otterbrix_expressions",
+            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization",
+            "otterbrix_table", "otterbrix_catalog"
         ]:
             c = self.cpp_info.components[comp]
             c.libs = [comp]
@@ -125,8 +124,9 @@ class Otterbrix(ConanFile):
         alias.libs = []
         alias.requires = [
             "otterbrix_core", "otterbrix_cpp",
-            "otterbrix_document", "otterbrix_types", "otterbrix_cursor",
-            "otterbrix_session", "otterbrix_expressions",
-            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization"
+            "otterbrix_document", "otterbrix_types", "otterbrix_vector",
+            "otterbrix_cursor", "otterbrix_session", "otterbrix_expressions",
+            "otterbrix_logical_plan", "otterbrix_sql", "otterbrix_serialization",
+            "otterbrix_table", "otterbrix_catalog"
         ]
         alias.set_property("cmake_target_name", "otterbrix::otterbrix")
