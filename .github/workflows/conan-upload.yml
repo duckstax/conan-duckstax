@@ -138,4 +138,5 @@ jobs:
           VERSION_FILTER: ${{ github.event.inputs.version }}
         run: |
           python scripts/build_packages.py recipes/ \
+            --profiles-dir=profiles/ \
             --upload=${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event.inputs.force_upload == 'true' }}

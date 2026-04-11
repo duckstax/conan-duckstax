@@ -7,6 +7,7 @@ Features:
 - Gets available options from recipes via conan inspect
 - Parses local dependencies from conanfile.py
 - Performs topological sort based on dependencies
+- Uses Conan profiles for C++ standard configuration
 - Validates configurations via conan graph info
 - Builds packages stage by stage in correct order
 - Optionally uploads to remote after build
@@ -24,19 +25,21 @@ from pathlib import Path
 import yaml
 
 # Default parameters
-DEFAULT_CXX_STANDARDS = [17, 20]
 DEFAULT_BUILD_TYPE = "Release"
 
 
-def get_package_versions(config_path: Path) -> list[str]:
-    """Extract versions from config.yml."""
+def get_package_versions(config_path: Path) -> dict[str, str]:
+    """Extract versions and their folder mappings from config.yml."""
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
     if not config or "versions" not in config:
-        return []
+        return {}
 
-    return list(config["versions"].keys())
+    return {
+        version: info["folder"]
+        for version, info in config["versions"].items()
+    }
 
 
 def get_recipe_options(recipe_path: Path) -> dict:
@@ -124,11 +127,45 @@ def export_recipe(recipe_path: Path, version: str) -> bool:
         return False
 
 
+def discover_profiles(profiles_dir: Path) -> list[dict]:
+    """
+    Discover conan profiles and extract cppstd setting.
+    Returns list of dicts with 'path', 'name', 'cppstd' keys.
+    """
+    profiles = []
+    if not profiles_dir.is_dir():
+        return profiles
+
+    for profile_file in sorted(profiles_dir.iterdir()):
+        if not profile_file.is_file():
+            continue
+
+        cppstd = None
+        content = profile_file.read_text()
+        m = re.search(r"compiler\.cppstd\s*=\s*(\S+)", content)
+        if m:
+            cppstd_val = m.group(1)
+            std_num = re.sub(r"^gnu", "", cppstd_val)
+            try:
+                cppstd = int(std_num)
+            except ValueError:
+                pass
+
+        profiles.append({
+            "path": profile_file,
+            "name": profile_file.name,
+            "cppstd": cppstd,
+        })
+
+    return profiles
+
+
 def check_valid_configuration(
     package_name: str,
     version: str,
     cxx_standard: int | None,
     build_type: str = "Release",
+    profile_path: Path | None = None,
 ) -> bool:
     """
     Check if configuration is valid using conan graph info.
@@ -141,6 +178,9 @@ def check_valid_configuration(
         "-s", f"build_type={build_type}",
     ]
 
+    if profile_path is not None:
+        cmd.extend(["-pr:h", str(profile_path)])
+
     if cxx_standard is not None:
         cmd.extend(["-o", f"{package_name}/*:cxx_standard={cxx_standard}"])
 
@@ -151,6 +191,14 @@ def check_valid_configuration(
         # Check for invalid configuration
         if "Invalid" in output and package_name in output:
             return False
+
+        if result.returncode != 0:
+            print(f"  validate {package_name}/{version}: returncode={result.returncode}",
+                  file=sys.stderr)
+            # Print last few lines of output for diagnostics
+            lines = output.strip().splitlines()
+            for line in lines[-5:]:
+                print(f"    {line}", file=sys.stderr)
 
         return result.returncode == 0
 
@@ -167,6 +215,7 @@ def build_package(
     version: str,
     cxx_standard: int | None = None,
     build_type: str = "Release",
+    profile_path: Path | None = None,
 ) -> bool:
     """Build a single package configuration using conan create."""
     package_name = recipe_path.parent.name
@@ -179,12 +228,16 @@ def build_package(
         "-s", f"build_type={build_type}",
     ]
 
+    if profile_path is not None:
+        cmd.extend(["-pr:h", str(profile_path)])
+
     if cxx_standard is not None:
         cmd.extend(["-o", f"{package_name}/*:cxx_standard={cxx_standard}"])
 
     std_str = f" C++{cxx_standard}" if cxx_standard else ""
+    profile_str = f" [{profile_path.name}]" if profile_path else ""
     print(f"\n{'='*60}")
-    print(f"Building: {package_name}/{version}{std_str}")
+    print(f"Building: {package_name}/{version}{std_str}{profile_str}")
     print(f"{'='*60}")
     print(f"Command: {' '.join(cmd)}\n")
 
@@ -245,28 +298,41 @@ def collect_packages(
 
         package_name = package_dir.name
 
-        # Get versions
-        if version_filter:
-            versions = [version_filter]
-        else:
-            versions = get_package_versions(config_path)
-
-        # Find recipe folder
-        recipe_path = None
-        for subdir in package_dir.iterdir():
-            if subdir.is_dir() and (subdir / "conanfile.py").exists():
-                recipe_path = subdir
-                break
-
-        if not recipe_path:
+        # Get version -> folder mapping
+        version_folders = get_package_versions(config_path)
+        if not version_folders:
             continue
 
-        options = get_recipe_options(recipe_path)
-        dependencies = get_local_dependencies(recipe_path, local_packages)
+        if version_filter:
+            version_folders = {
+                v: f for v, f in version_folders.items() if v == version_filter
+            }
+
+        # Build per-version info with correct recipe path
+        version_info = {}
+        for version, folder in version_folders.items():
+            recipe_path = package_dir / folder
+            if not (recipe_path / "conanfile.py").exists():
+                print(f"Warning: {recipe_path}/conanfile.py not found for "
+                      f"{package_name}/{version}", file=sys.stderr)
+                continue
+            version_info[version] = recipe_path
+
+        if not version_info:
+            continue
+
+        # Collect options and dependencies from all recipe folders
+        all_dependencies = set()
+        options = {}
+        for recipe_path in version_info.values():
+            opts = get_recipe_options(recipe_path)
+            if not options:
+                options = opts
+            all_dependencies |= get_local_dependencies(recipe_path, local_packages)
+        dependencies = all_dependencies
 
         package_info[package_name] = {
-            "recipe_path": recipe_path,
-            "versions": versions,
+            "version_info": version_info,
             "options": options,
             "dependencies": dependencies,
         }
@@ -284,6 +350,12 @@ def main():
         help="Path to recipes directory",
     )
     parser.add_argument(
+        "--profiles-dir",
+        type=Path,
+        default=None,
+        help="Path to directory with Conan profiles",
+    )
+    parser.add_argument(
         "--upload",
         type=str,
         default="false",
@@ -296,13 +368,6 @@ def main():
         help="Build type (default: Release)",
     )
     parser.add_argument(
-        "--cxx-standards",
-        type=int,
-        nargs="+",
-        default=DEFAULT_CXX_STANDARDS,
-        help="C++ standards to build (default: 17 20)",
-    )
-    parser.add_argument(
         "--skip-validation",
         action="store_true",
         help="Skip conan graph info validation (faster, but may include invalid configs)",
@@ -310,6 +375,20 @@ def main():
 
     args = parser.parse_args()
     do_upload = args.upload.lower() == "true"
+
+    # Discover profiles
+    profiles_dir = args.profiles_dir
+    if profiles_dir is None:
+        # Auto-detect: look for profiles/ next to recipes_dir
+        candidate = args.recipes_dir.parent / "profiles"
+        if candidate.is_dir():
+            profiles_dir = candidate
+
+    profiles = discover_profiles(profiles_dir) if profiles_dir else []
+
+    if not profiles:
+        # Fallback: single build with default profile
+        profiles = [{"path": None, "name": "default", "cppstd": None}]
 
     # Diagnostics
     remote_url = os.environ.get("CONAN_REMOTE_URL", "")
@@ -321,6 +400,7 @@ def main():
     print(f"  CONAN_REMOTE_URL set: {bool(remote_url)}")
     if remote_url:
         print(f"  CONAN_REMOTE_URL: {remote_url[:20]}...")
+    print(f"  profiles: {[p['name'] for p in profiles]}")
     print(f"{'='*60}\n")
 
     # Get filters from environment
@@ -348,8 +428,8 @@ def main():
     # Export all recipes first
     print("Exporting all recipes...")
     for package_name, info in package_info.items():
-        for version in info["versions"]:
-            if export_recipe(info["recipe_path"], version):
+        for version, recipe_path in info["version_info"].items():
+            if export_recipe(recipe_path, version):
                 print(f"  Exported {package_name}/{version}")
             else:
                 print(f"  Failed to export {package_name}/{version}", file=sys.stderr)
@@ -369,34 +449,41 @@ def main():
                 continue
 
             info = package_info[package_name]
-            recipe_path = info["recipe_path"]
-            versions = info["versions"]
+            version_info = info["version_info"]
             options = info["options"]
             has_cxx_standard = "cxx_standard" in options
 
-            # Determine cxx_standard values to test
-            if has_cxx_standard:
-                available = options.get("cxx_standard", [])
-                if available:
-                    # Options can be strings or ints, normalize to int
-                    test_standards = [
-                        int(str(s)) for s in available
-                        if int(str(s)) in args.cxx_standards
-                    ]
-                else:
-                    test_standards = args.cxx_standards
-            else:
-                test_standards = [None]
+            for profile in profiles:
+                profile_path = profile["path"]
+                profile_cppstd = profile["cppstd"]
 
-            for version in versions:
-                for cxx_std in test_standards:
+                # Determine cxx_standard option value for this profile
+                if has_cxx_standard:
+                    available = options.get("cxx_standard", [])
+                    if profile_cppstd is not None and available:
+                        cppstd_str = str(profile_cppstd)
+                        if cppstd_str not in [str(s) for s in available]:
+                            for version in version_info:
+                                build_id = f"{package_name}/{version} [{profile['name']}]"
+                                print(f"Skipping {build_id} - cxx_standard={profile_cppstd} not available")
+                                skipped.append(build_id)
+                            continue
+                        cxx_std = profile_cppstd
+                    else:
+                        cxx_std = None
+                else:
+                    cxx_std = None
+
+                for version, recipe_path in version_info.items():
                     build_id = f"{package_name}/{version}" + \
-                               (f" C++{cxx_std}" if cxx_std else "")
+                               (f" C++{cxx_std}" if cxx_std else "") + \
+                               f" [{profile['name']}]"
 
                     # Validate configuration
                     if not args.skip_validation:
                         if not check_valid_configuration(
-                            package_name, version, cxx_std, args.build_type
+                            package_name, version, cxx_std,
+                            args.build_type, profile_path,
                         ):
                             print(f"Skipping {build_id} - invalid configuration")
                             skipped.append(build_id)
@@ -404,7 +491,8 @@ def main():
 
                     # Build
                     success = build_package(
-                        recipe_path, version, cxx_std, args.build_type
+                        recipe_path, version, cxx_std,
+                        args.build_type, profile_path,
                     )
 
                     if success:
