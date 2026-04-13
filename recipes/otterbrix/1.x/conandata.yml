@@ -10,3 +10,6 @@ patches:
     - patch_file: "patches/fix-catalog-compute-includes.patch"
       patch_description: "Fix relative includes in namespace_storage.hpp to use absolute component paths"
       patch_type: "bugfix"
+    - patch_file: "patches/fix-table-session-link.patch"
+      patch_description: "Fix missing otterbrix::session link in table component (transaction_manager uses session_id_t::data())"
+      patch_type: "bugfix"
