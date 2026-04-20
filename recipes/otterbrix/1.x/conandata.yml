@@ -1,9 +1,9 @@
 sources:
-  "1.0.0a12-rc-1":
-    url: "https://github.com/duckstax/otterbrix/archive/refs/tags/1.0.0a12-rc-1.tar.gz"
+  "1.0.0a12-rc-2":
+    url: "https://github.com/duckstax/otterbrix/archive/refs/tags/1.0.0a12-rc-2.tar.gz"
     sha256: "d9419d2db587544258891fb9accbd0c0f68443463e146676729ec9b534e26bda"
 patches:
-  "1.0.0a12-rc-1":
+  "1.0.0a12-rc-2":
     - patch_file: "patches/fix-flex-bison-output-dir.patch"
       patch_description: "Create output directory for flex/bison generated files"
       patch_type: "bugfix"
