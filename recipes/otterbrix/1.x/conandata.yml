@@ -1,7 +1,7 @@
 sources:
   "1.0.0a12-rc-3":
     url: "https://github.com/duckstax/otterbrix/archive/refs/tags/1.0.0a12-rc-3.tar.gz"
-    sha256: "fd767fb99ef2ea4b68f821f6485b240110fb354946ad417faf5945c33864aaf7"
+    sha256: "d3074d84fa2a83a799ccc43c8c034dc33812d32ab887280bf93f1af6e49ba2a4"
 patches:
   "1.0.0a12-rc-3":
     - patch_file: "patches/fix-flex-bison-output-dir.patch"
