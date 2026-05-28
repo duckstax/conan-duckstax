@@ -1,4 +1,8 @@
 sources:
+  "1.2.0":
+    url: "https://github.com/duckstax/actor-zeta/archive/1.2.0.tar.gz"
+    sha256: "b8ee4a85fa8999e4e6e16a5d2f19ce510772755d04c5d4c92b3f687b6113d02d"
+
   "1.1.1":
     url: "https://github.com/duckstax/actor-zeta/archive/1.1.1.tar.gz"
     sha256: "758376faa49d1c87fd60c6b216221af9c51ffca86a1e9ef6667a59af16262348"
