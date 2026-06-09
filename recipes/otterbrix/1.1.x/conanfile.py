@@ -37,7 +37,7 @@ class Otterbrix(ConanFile):
         check_min_cppstd(self, 20)
 
     def requirements(self):
-        self.requires("boost/1.87.0", override=True)
+        self.requires("boost/1.87.0", force=True)
         self.requires("fmt/11.1.3@")
         self.requires("spdlog/1.15.1@")
         if self.options.build_python:
@@ -114,6 +114,7 @@ class Otterbrix(ConanFile):
             "msgpack-cxx::msgpack-cxx",
             "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
             "catch2::catch2", "benchmark::benchmark",
+            "fast_float::fast_float",
         ]
 
         if self.options.build_python:
