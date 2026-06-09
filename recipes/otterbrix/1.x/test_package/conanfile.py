@@ -20,7 +20,14 @@ class OtterbrixTestConan(ConanFile):
         self.requires("benchmark/1.6.1")
         self.requires("zlib/1.3.1")
         self.requires("bzip2/1.0.8")
-        self.requires("actor-zeta/1.1.1")
+        # Match the actor-zeta / fast_float deps of the otterbrix version under
+        # test. tested_reference_str carries a recipe revision (name/version#rev),
+        # so test for the version as a substring rather than exact equality.
+        if "1.0.0a12-rc-3" in self.tested_reference_str:
+            self.requires("actor-zeta/1.1.1")
+        else:
+            self.requires("actor-zeta/1.2.0")
+            self.requires("fast_float/8.1.0")
 
     def layout(self):
         cmake_layout(self)
