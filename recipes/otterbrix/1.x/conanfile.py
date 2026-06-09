@@ -9,8 +9,8 @@ from glob import glob
 class Otterbrix(ConanFile):
     name = "otterbrix"
     description = "otterbrix is an open-source framework for developing conventional and analytical applications."
-    url = "https://github.com/duckstax/otterbrix"
-    homepage = "https://github.com/duckstax/otterbrix"
+    url = "https://github.com/otterbrix/otterbrix"
+    homepage = "https://github.com/otterbrix/otterbrix"
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
     exports = ["LICENSE.md"]
@@ -30,6 +30,14 @@ class Otterbrix(ConanFile):
         "boost/*:header_only": True,
     }
 
+    # otterbrix 1.0.0a12-rc-3 builds against actor-zeta 1.1.1 and does not use
+    # fast_float; from 1.0.0a13-rc-1 onwards it needs actor-zeta 1.2.0 and
+    # fast_float. New versions added to this folder default to the latter.
+    _legacy_versions = {"1.0.0a12-rc-3"}
+
+    def _uses_fast_float(self):
+        return self.version not in self._legacy_versions
+
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -48,7 +56,11 @@ class Otterbrix(ConanFile):
         self.requires("benchmark/1.6.1")
         self.requires("zlib/1.3.1")
         self.requires("bzip2/1.0.8")
-        self.requires("actor-zeta/1.1.1")
+        if self._uses_fast_float():
+            self.requires("actor-zeta/1.2.0")
+            self.requires("fast_float/8.1.0")
+        else:
+            self.requires("actor-zeta/1.1.1")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -101,84 +113,23 @@ class Otterbrix(ConanFile):
             os.remove(f)
 
     def package_info(self):
-        # General properties
+        # Single aggregate target. otterbrix reorganizes its internal module
+        # layout between releases, so instead of hardcoding a per-component
+        # graph we expose every packaged library under one otterbrix::otterbrix
+        # target and let collect_libs() discover whatever was built.
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
         self.cpp_info.set_property("cmake_target_name", "otterbrix::otterbrix")
         self.cpp_info.includedirs = ["include"]
         self.cpp_info.libdirs = ["lib"]
+        self.cpp_info.libs = collect_libs(self)
 
-        # External dependencies
-        common_deps = [
+        self.cpp_info.requires = [
             "boost::boost", "abseil::abseil", "actor-zeta::actor-zeta",
             "msgpack-cxx::msgpack-cxx",
             "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
             "catch2::catch2", "benchmark::benchmark",
         ]
-
+        if self._uses_fast_float():
+            self.cpp_info.requires.append("fast_float::fast_float")
         if self.options.build_python:
-            common_deps.append("pybind11::pybind11")
-
-        # Core libraries
-        for comp in [
-            "otterbrix_assert", "otterbrix_b_plus_tree", "otterbrix_file",
-            "otterbrix_locks", "otterbrix_string_heap",
-        ]:
-            c = self.cpp_info.components[comp]
-            c.libs = [comp]
-            c.requires = common_deps
-            c.set_property("cmake_target_name", f"otterbrix::{comp}")
-
-        # Component libraries
-        for comp in [
-            "otterbrix_catalog", "otterbrix_compute", "otterbrix_context",
-            "otterbrix_cursor", "otterbrix_expressions", "otterbrix_index",
-            "otterbrix_log", "otterbrix_logical_plan",
-            "otterbrix_physical_plan", "otterbrix_physical_plan_generator",
-            "otterbrix_planner", "otterbrix_serialization",
-            "otterbrix_session", "otterbrix_sql", "otterbrix_table",
-            "otterbrix_types", "otterbrix_vector",
-        ]:
-            c = self.cpp_info.components[comp]
-            c.libs = [comp]
-            c.requires = common_deps
-            c.set_property("cmake_target_name", f"otterbrix::{comp}")
-
-        # Interface-only components (no libs)
-        for comp in ["otterbrix_configuration", "otterbrix_storage"]:
-            c = self.cpp_info.components[comp]
-            c.libs = []
-            c.requires = common_deps
-            c.set_property("cmake_target_name", f"otterbrix::{comp}")
-
-        # Services library
-        services = self.cpp_info.components["otterbrix_services"]
-        services.libs = ["otterbrix_services"]
-        services.requires = common_deps
-        services.set_property("cmake_target_name", "otterbrix::services")
-
-        # C++ wrapper library
-        wrapper = self.cpp_info.components["otterbrix_cpp"]
-        wrapper.libs = ["cpp_otterbrix"]
-        wrapper.requires = ["otterbrix_services"] + common_deps
-        wrapper.set_property("cmake_target_name", "otterbrix::cpp_otterbrix")
-
-        # Aggregate (meta) component
-        alias = self.cpp_info.components["otterbrix"]
-        alias.libs = []
-        alias.requires = [
-            # core
-            "otterbrix_assert", "otterbrix_b_plus_tree", "otterbrix_file",
-            "otterbrix_locks", "otterbrix_string_heap",
-            # components
-            "otterbrix_catalog", "otterbrix_compute", "otterbrix_context",
-            "otterbrix_cursor", "otterbrix_expressions", "otterbrix_index",
-            "otterbrix_log", "otterbrix_logical_plan",
-            "otterbrix_physical_plan", "otterbrix_physical_plan_generator",
-            "otterbrix_planner", "otterbrix_serialization",
-            "otterbrix_session", "otterbrix_sql", "otterbrix_table",
-            "otterbrix_types", "otterbrix_vector",
-            "otterbrix_configuration", "otterbrix_storage",
-            # services & wrapper
-            "otterbrix_services", "otterbrix_cpp",
-        ]
-        alias.set_property("cmake_target_name", "otterbrix::otterbrix")
+            self.cpp_info.requires.append("pybind11::pybind11")
