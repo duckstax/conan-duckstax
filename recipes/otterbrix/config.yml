@@ -1,4 +1,6 @@
 versions:
+  "1.0.0a13-rc-3":
+    folder: "1.x"
   "1.0.0a13-rc-2":
     folder: "1.x"
   "1.0.0a13-rc-1":
