@@ -45,7 +45,7 @@ class Otterbrix(ConanFile):
         check_min_cppstd(self, 20)
 
     def requirements(self):
-        self.requires("boost/1.87.0", force=True)
+        self.requires("boost/1.88.0", force=True)
         self.requires("fmt/11.1.3")
         self.requires("spdlog/1.15.1")
         if self.options.build_python:
