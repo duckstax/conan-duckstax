@@ -30,14 +30,6 @@ class Otterbrix(ConanFile):
         "boost/*:header_only": True,
     }
 
-    # otterbrix 1.0.0a12-rc-3 builds against actor-zeta 1.1.1 and does not use
-    # fast_float; from 1.0.0a13-rc-1 onwards it needs actor-zeta 1.2.0 and
-    # fast_float. New versions added to this folder default to the latter.
-    _legacy_versions = {"1.0.0a12-rc-3"}
-
-    def _uses_fast_float(self):
-        return self.version not in self._legacy_versions
-
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -45,7 +37,7 @@ class Otterbrix(ConanFile):
         check_min_cppstd(self, 20)
 
     def requirements(self):
-        self.requires("boost/1.87.0", force=True)
+        self.requires("boost/1.88.0", force=True)
         self.requires("fmt/11.1.3")
         self.requires("spdlog/1.15.1")
         if self.options.build_python:
@@ -56,11 +48,8 @@ class Otterbrix(ConanFile):
         self.requires("benchmark/1.6.1")
         self.requires("zlib/1.3.1")
         self.requires("bzip2/1.0.8")
-        if self._uses_fast_float():
-            self.requires("actor-zeta/1.2.0")
-            self.requires("fast_float/8.1.0")
-        else:
-            self.requires("actor-zeta/1.1.1")
+        self.requires("actor-zeta/1.2.0")
+        self.requires("fast_float/8.1.0")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -125,11 +114,9 @@ class Otterbrix(ConanFile):
 
         self.cpp_info.requires = [
             "boost::boost", "abseil::abseil", "actor-zeta::actor-zeta",
-            "msgpack-cxx::msgpack-cxx",
+            "msgpack-cxx::msgpack-cxx", "fast_float::fast_float",
             "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
             "catch2::catch2", "benchmark::benchmark",
         ]
-        if self._uses_fast_float():
-            self.cpp_info.requires.append("fast_float::fast_float")
         if self.options.build_python:
             self.cpp_info.requires.append("pybind11::pybind11")

@@ -29,16 +29,7 @@ DEFAULT_BUILD_TYPE = "Release"
 
 # (package_name, version, profile_name) combinations to exclude from the build
 # matrix. These are valid configurations to build, but cannot be exercised in CI.
-#
-# otterbrix/1.0.0a10-rc-10 [cpp17]: the legacy 0.x test_package requires
-# cpp17/shared=False binaries of abseil, actor-zeta/1.0.0a12, benchmark and
-# spdlog. Those are neither prebuilt on the remote nor built by
-# `conan create --build=missing` (test_package deps need --build-test), so the
-# create fails while resolving the test_package graph. This is a CI/remote-cache
-# limitation in the old recipe, unrelated to whether the package builds.
-EXCLUDED_COMBINATIONS = {
-    ("otterbrix", "1.0.0a10-rc-10", "cpp17"),
-}
+EXCLUDED_COMBINATIONS: set[tuple[str, str, str]] = set()
 
 
 def get_package_versions(config_path: Path) -> dict[str, str]:
