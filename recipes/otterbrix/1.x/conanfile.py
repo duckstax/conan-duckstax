@@ -37,14 +37,13 @@ class Otterbrix(ConanFile):
         check_min_cppstd(self, 20)
 
     def requirements(self):
-        self.requires("boost/1.88.0", force=True)
+        self.requires("boost/1.88.0")
         self.requires("fmt/11.1.3")
         self.requires("spdlog/1.15.1")
         if self.options.build_python:
             self.requires("pybind11/2.13.6")
-        self.requires("msgpack-cxx/4.1.1")
-        self.requires("catch2/2.13.7")
-        self.requires("abseil/20230802.1")
+        self.requires("catch2/3.15.2")
+        self.requires("abseil/20260107.1")
         self.requires("benchmark/1.6.1")
         self.requires("zlib/1.3.1")
         self.requires("bzip2/1.0.8")
@@ -114,7 +113,7 @@ class Otterbrix(ConanFile):
 
         self.cpp_info.requires = [
             "boost::boost", "abseil::abseil", "actor-zeta::actor-zeta",
-            "msgpack-cxx::msgpack-cxx", "fast_float::fast_float",
+            "fast_float::fast_float",
             "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
             "catch2::catch2", "benchmark::benchmark",
         ]
