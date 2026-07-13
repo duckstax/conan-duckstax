@@ -11,12 +11,11 @@ class OtterbrixTestConan(ConanFile):
 
     def requirements(self):
         self.requires(self.tested_reference_str)
-        self.requires("boost/1.88.0", force=True)
+        self.requires("boost/1.88.0")
         self.requires("fmt/11.1.3")
         self.requires("spdlog/1.15.1")
-        self.requires("msgpack-cxx/4.1.1")
-        self.requires("catch2/2.13.7")
-        self.requires("abseil/20230802.1")
+        self.requires("catch2/3.15.2")
+        self.requires("abseil/20260107.1")
         self.requires("benchmark/1.6.1")
         self.requires("zlib/1.3.1")
         self.requires("bzip2/1.0.8")

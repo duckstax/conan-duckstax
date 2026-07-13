@@ -3,8 +3,8 @@ project(test_package LANGUAGES CXX)
 
 find_package(absl REQUIRED)
 find_package(otterbrix REQUIRED)
-find_package(Catch2 2.13.7 REQUIRED)
-find_package(Boost 1.87.0 REQUIRED)
+find_package(Catch2 3 REQUIRED)
+find_package(Boost 1.88.0 REQUIRED)
 find_package(Threads)
 
 add_executable(test_package test.cpp)
@@ -17,5 +17,4 @@ target_link_libraries(test_package
     Catch2::Catch2
     absl::flat_hash_map
     absl::node_hash_map
-    msgpackc-cxx
 )
