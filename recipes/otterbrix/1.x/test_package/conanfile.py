@@ -14,7 +14,7 @@ class OtterbrixTestConan(ConanFile):
         self.requires("boost/1.88.0")
         self.requires("fmt/11.1.3")
         self.requires("spdlog/1.15.1")
-        self.requires("catch2/3.15.2")
+        self.requires("catch2/3.15.1")
         self.requires("abseil/20260107.1", force=True)
         self.requires("re2/20240702")
         self.requires("benchmark/1.6.1")
