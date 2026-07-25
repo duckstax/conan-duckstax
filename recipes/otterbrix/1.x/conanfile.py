@@ -43,7 +43,10 @@ class Otterbrix(ConanFile):
         if self.options.build_python:
             self.requires("pybind11/2.13.6")
         self.requires("catch2/3.15.2")
-        self.requires("abseil/20260107.1")
+        # force: re2's recipe pins an older abseil range; override it so re2 and the
+        # rest of the tree share the single abseil binary we already depend on.
+        self.requires("abseil/20260107.1", force=True)
+        self.requires("re2/20240702")
         self.requires("benchmark/1.6.1")
         self.requires("zlib/1.3.1")
         self.requires("bzip2/1.0.8")
@@ -113,7 +116,7 @@ class Otterbrix(ConanFile):
 
         self.cpp_info.requires = [
             "boost::boost", "abseil::abseil", "actor-zeta::actor-zeta",
-            "fast_float::fast_float",
+            "re2::re2", "fast_float::fast_float",
             "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
             "catch2::catch2", "benchmark::benchmark",
         ]
