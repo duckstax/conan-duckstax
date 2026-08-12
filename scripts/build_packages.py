@@ -256,10 +256,12 @@ def upload_package(package_name: str, version: str) -> bool:
         print(f"  Skipping upload {package_name}/{version}: CONAN_REMOTE_URL not set")
         return True
 
+    remote = os.environ.get("CONAN_REMOTE", "otterbrix")
+
     cmd = [
         "conan", "upload",
         f"{package_name}/{version}:*",
-        "-r=otterbrix",
+        f"-r={remote}",
         "--confirm",
     ]
 
