@@ -2,7 +2,7 @@ name: Build & Upload
 
 env:
   CONAN_REMOTE: otterbrix
-  CONAN_REMOTE_URL: http://conan.otterbrix.com
+  CONAN_REMOTE_URL: https://conan.otterbrix.com
 
 on:
   push:
@@ -119,17 +119,18 @@ jobs:
         run: pip install pyyaml
 
       - name: Configure Conan
-        env:
-          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_LOGIN_USERNAME }}
-          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         run: |
           conan profile detect --force
 
           # Ensure conancenter is available for pre-built dependencies
-          conan remote add conancenter https://center2.conan.io --force || true
+          conan remote add conancenter https://center2.conan.io --force
 
-          # Add otterbrix remote
-          conan remote add ${{ env.CONAN_REMOTE }} ${{ env.CONAN_REMOTE_URL }} --force || true
+      - name: Conan login
+        env:
+          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_LOGIN_USERNAME }}
+          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
+        run: |
+          conan remote add ${{ env.CONAN_REMOTE }} ${{ env.CONAN_REMOTE_URL }} --force
           conan remote login ${{ env.CONAN_REMOTE }} "$CONAN_LOGIN_USERNAME" -p "$CONAN_PASSWORD"
 
       - name: Build all packages in dependency order
