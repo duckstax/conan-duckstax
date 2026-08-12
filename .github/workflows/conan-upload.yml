@@ -2,7 +2,7 @@ name: Build & Upload
 
 env:
   CONAN_REMOTE: otterbrix
-  CONAN_REMOTE_URL: http://conan.otterbrix.com
+  CONAN_REMOTE_URL: https://conan.otterbrix.com
 
 on:
   push:
