@@ -69,7 +69,16 @@ class Otterbrix(ConanFile):
         deps = CMakeDeps(self)
         deps.generate()
 
+    def _inject_homebrew_bison(self):
+        # macOS ships bison 2.3 (Xcode CLT) which cannot parse gram.y (needs >= 3.x).
+        # Prefer Homebrew bison when present so find_package(BISON) picks it up.
+        if self.settings.os == "Macos":
+            brew_bison = "/opt/homebrew/opt/bison/bin"
+            if os.path.isdir(brew_bison):
+                os.environ["PATH"] = brew_bison + os.pathsep + os.environ.get("PATH", "")
+
     def build(self):
+        self._inject_homebrew_bison()
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
