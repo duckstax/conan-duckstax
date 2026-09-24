@@ -63,7 +63,7 @@ conan create recipes/otterbrix/1.x --version=1.0.0b2-rc-3 \
 |--------|--------|---------|
 | `shared` | True/False | False |
 | `fPIC` | True/False | False |
-| `cxx_standard` | 17, 20 | 20 |
+| `cxx_standard` | 20 | 20 |
 | `exceptions_disable` | True/False | False |
 | `rtti_disable` | True/False | False |
 
