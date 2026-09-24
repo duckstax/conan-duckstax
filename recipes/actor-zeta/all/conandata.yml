@@ -1,16 +1,8 @@
 sources:
+  "2.0.0":
+    url: "https://github.com/otterbrix/actor-zeta/archive/2.0.0.tar.gz"
+    sha256: "ffde20bdfe72619058ef7b29acb402791d3f462de4efee81095a88422b8a5c37"
+
   "1.2.0":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.2.0.tar.gz"
+    url: "https://github.com/otterbrix/actor-zeta/archive/1.2.0.tar.gz"
     sha256: "b8ee4a85fa8999e4e6e16a5d2f19ce510772755d04c5d4c92b3f687b6113d02d"
-
-  "1.1.1":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.1.1.tar.gz"
-    sha256: "758376faa49d1c87fd60c6b216221af9c51ffca86a1e9ef6667a59af16262348"
-
-  "1.1.0":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.1.0.tar.gz"
-    sha256: "5510c6cb3250f6403aed80c5919569486bed6b7d44f2b2d1c7f0a961d6ccbc6e"
-
-  "1.0.0a12":
-    url: "https://github.com/duckstax/actor-zeta/archive/1.0.0a12.tar.gz"
-    sha256: "8f2d0ca36ee43944a5c76174077405b200e5b358addc60602df1fe1e095e9277"

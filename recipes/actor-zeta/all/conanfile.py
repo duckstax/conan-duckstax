@@ -1,16 +1,14 @@
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, export_conandata_patches, get, copy, collect_libs
-from conan.tools.scm import Version
 import os
 
 
 class ActorZetaConan(ConanFile):
     name = "actor-zeta"
     description = "actor-zeta is an open source C++ virtual actor model implementation featuring lightweight & fast and more."
-    url = "https://github.com/duckstax/actor-zeta"
-    homepage = "https://github.com/duckstax/actor-zeta"
+    url = "https://github.com/otterbrix/actor-zeta"
+    homepage = "https://github.com/otterbrix/actor-zeta"
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
     package_type = "library"
@@ -22,7 +20,7 @@ class ActorZetaConan(ConanFile):
         "fPIC": [True, False],
         "exceptions_disable": [True, False],
         "rtti_disable": [True, False],
-        "cxx_standard": ["17", "20"],
+        "cxx_standard": ["20"],
     }
 
     default_options = {
@@ -43,15 +41,6 @@ class ActorZetaConan(ConanFile):
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
-
-    def validate(self):
-        # Per-version C++ standard requirements
-        min_cppstd = 20 if Version(self.version) >= "1.1.0" else 17
-        if int(str(self.options.cxx_standard)) < min_cppstd:
-            raise ConanInvalidConfiguration(
-                f"{self.name}/{self.version} requires at least C++{min_cppstd}, "
-                f"but cxx_standard={self.options.cxx_standard} was specified"
-            )
 
     def layout(self):
         cmake_layout(self)
