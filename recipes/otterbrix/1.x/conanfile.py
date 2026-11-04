@@ -1,9 +1,11 @@
 from conan import ConanFile
+from conan.errors import ConanException
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
-from conan.tools.files import apply_conandata_patches, export_conandata_patches, copy, get, rmdir, save, load, collect_libs
+from conan.tools.env import VirtualBuildEnv
+from conan.tools.files import apply_conandata_patches, export_conandata_patches, copy, get, rm, save
 import os
-from glob import glob
+import textwrap
 
 
 class Otterbrix(ConanFile):
@@ -13,7 +15,6 @@ class Otterbrix(ConanFile):
     homepage = "https://github.com/otterbrix/otterbrix"
     author = "kotbegemot <k0tb9g9m0t@gmail.com>"
     license = "MIT"
-    exports = ["LICENSE.md"]
     settings = "os", "compiler", "build_type", "arch"
     options = {
         "shared": [True, False],
@@ -21,7 +22,7 @@ class Otterbrix(ConanFile):
     }
 
     default_options = {
-        "shared": True,
+        "shared": False,
         "build_python": False,
         "actor-zeta/*:cxx_standard": 20,
         "actor-zeta/*:fPIC": True,
@@ -37,21 +38,23 @@ class Otterbrix(ConanFile):
         check_min_cppstd(self, 20)
 
     def requirements(self):
-        self.requires("boost/1.88.0")
-        self.requires("fmt/11.1.3")
-        self.requires("spdlog/1.15.1")
+        # transitive_headers: the installed otterbrix headers include these, so a consumer needs their include dirs
+        self.requires("boost/1.88.0", transitive_headers=True)
+        self.requires("fmt/11.1.3", transitive_headers=True)
+        self.requires("spdlog/1.15.1", transitive_headers=True)
         if self.options.build_python:
             self.requires("pybind11/2.13.6")
         self.requires("catch2/3.15.1")
         # force: re2's recipe pins an older abseil range; override it so re2 and the
         # rest of the tree share the single abseil binary we already depend on.
-        self.requires("abseil/20260107.1", force=True)
+        self.requires("abseil/20260107.1", force=True, transitive_headers=True)
         self.requires("re2/20240702")
         self.requires("benchmark/1.6.1")
-        self.requires("zlib/1.3.1")
-        self.requires("bzip2/1.0.8")
-        self.requires("actor-zeta/1.2.0")
-        self.requires("fast_float/8.1.0")
+        self.requires("actor-zeta/2.0.0", transitive_headers=True)
+
+    def build_requirements(self):
+        self.tool_requires("bison/3.8.2")
+        self.tool_requires("flex/2.6.4")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -62,71 +65,61 @@ class Otterbrix(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["CMAKE_CXX_STANDARD"] = "20"
+        tc.user_presets_path = False
+        # the shared option selects what package() ships; BUILD_SHARED_LIBS would turn every component into a .so
+        tc.blocks.remove("shared")
         tc.variables["BUILD_PYTHON"] = bool(self.options.build_python)
+
+        # A prebuilt bison carries the m4 path of the machine that built it, and flex looks "m4" up on PATH,
+        # so both run through wrappers that export the m4 of the build environment.
+        env = VirtualBuildEnv(self, auto_generate=True).vars()
+        m4 = env.get("M4")
+        if not m4:
+            raise ConanException("M4 is not defined by the build environment of bison/flex")
+        for tool, variable in (("bison", "BISON_EXECUTABLE"), ("flex", "FLEX_EXECUTABLE")):
+            wrapper = os.path.join(self.generators_folder, tool)
+            executable = os.path.join(self.dependencies.build[tool].package_folder, "bin", tool)
+            save(self, wrapper, textwrap.dedent(f"""\
+                #!/bin/sh
+                export M4="{m4}"
+                export BISON_PKGDATADIR="{env.get("BISON_PKGDATADIR", "")}"
+                exec "{executable}" "$@"
+                """))
+            os.chmod(wrapper, 0o755)
+            tc.variables[variable] = wrapper
         tc.generate()
 
         deps = CMakeDeps(self)
         deps.generate()
 
-    def _inject_homebrew_bison(self):
-        # macOS ships bison 2.3 (Xcode CLT) which cannot parse gram.y (needs >= 3.x).
-        # Prefer Homebrew bison when present so find_package(BISON) picks it up.
-        if self.settings.os == "Macos":
-            brew_bison = "/opt/homebrew/opt/bison/bin"
-            if os.path.isdir(brew_bison):
-                os.environ["PATH"] = brew_bison + os.pathsep + os.environ.get("PATH", "")
-
     def build(self):
-        self._inject_homebrew_bison()
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
 
     def package(self):
-        # C++ integration headers
-        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include/otterbrix"),
-             src=os.path.join(self.source_folder, "integration/cpp"))
-        copy(self, "*.h", dst=os.path.join(self.package_folder, "include/otterbrix"),
-             src=os.path.join(self.source_folder, "integration/cpp"))
-        # C integration headers
-        copy(self, "*.h", dst=os.path.join(self.package_folder, "include/otterbrix/c"),
-             src=os.path.join(self.source_folder, "integration/c"))
-        # All project headers
-        copy(self, "*.hpp", dst=os.path.join(self.package_folder,
-                                             "include"), src=self.source_folder)
-        copy(self, "*.h", dst=os.path.join(self.package_folder,
-                                           "include"), src=self.source_folder)
-
-        copy(self, "*.dll", src=self.build_folder,
-             dst=os.path.join(self.package_folder, "bin"), keep_path=False)
-        copy(self, "*.lib", src=self.build_folder,
-             dst=os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.a", src=self.build_folder,
-             dst=os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.so*", src=self.build_folder,
-             dst=os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.dylib", src=self.build_folder,
-             dst=os.path.join(self.package_folder, "lib"), keep_path=False)
-
-        for f in glob(os.path.join(self.package_folder, "lib", "otterbrix.cpython-*.so")):
-            os.remove(f)
+        copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        CMake(self).install()
+        lib = os.path.join(self.package_folder, "lib")
+        if self.options.shared:
+            rm(self, "*.a", lib)
+        else:
+            rm(self, "*.so*", lib)
+            rm(self, "*.dylib", lib)
 
     def package_info(self):
-        # Single aggregate target. otterbrix reorganizes its internal module
-        # layout between releases, so instead of hardcoding a per-component
-        # graph we expose every packaged library under one otterbrix::otterbrix
-        # target and let collect_libs() discover whatever was built.
         self.cpp_info.set_property("cmake_file_name", "otterbrix")
         self.cpp_info.set_property("cmake_target_name", "otterbrix::otterbrix")
-        self.cpp_info.includedirs = ["include"]
-        self.cpp_info.libdirs = ["lib"]
-        self.cpp_info.libs = collect_libs(self)
+        self.cpp_info.libs = ["otterbrix"]
+        # otterbrix_add_parser_extension() is defined by find_package(otterbrix) itself.
+        self.cpp_info.set_property("cmake_build_modules",
+                                   [os.path.join("lib", "cmake", "otterbrix", "otterbrix_parser_extension.cmake")])
+        if self.settings.os in ("Linux", "FreeBSD"):
+            self.cpp_info.system_libs = ["dl", "pthread"]
 
         self.cpp_info.requires = [
             "boost::boost", "abseil::abseil", "actor-zeta::actor-zeta",
-            "re2::re2", "fast_float::fast_float",
-            "fmt::fmt", "spdlog::spdlog", "zlib::zlib", "bzip2::bzip2",
+            "re2::re2", "fmt::fmt", "spdlog::spdlog",
             "catch2::catch2", "benchmark::benchmark",
         ]
         if self.options.build_python:

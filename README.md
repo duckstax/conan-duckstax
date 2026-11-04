@@ -7,7 +7,7 @@ Conan recipes for DuckStax packages. Compatible with [conan-center-index](https:
 | Package | Description | Latest Version |
 |---------|-------------|----------------|
 | **actor-zeta** | C++ virtual actor model implementation | 2.0.0          |
-| **otterbrix** | Open-source framework for analytical applications | 1.0.0b2-rc-3   |
+| **otterbrix** | Open-source framework for analytical applications | 1.0.0b2-rc-4   |
 
 ## Usage
 
@@ -49,7 +49,7 @@ conan create recipes/actor-zeta/all --version=2.0.0 \
   --build=missing
 
 # Build otterbrix (depends on actor-zeta)
-conan create recipes/otterbrix/1.x --version=1.0.0b2-rc-3 \
+conan create recipes/otterbrix/1.x --version=1.0.0b2-rc-4 \
   -o "actor-zeta/*:cxx_standard=20" \
   -s build_type=Release \
   --build=missing
