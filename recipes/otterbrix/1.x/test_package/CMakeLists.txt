@@ -1,20 +1,12 @@
 cmake_minimum_required(VERSION 3.15)
 project(test_package LANGUAGES CXX)
 
-find_package(absl REQUIRED)
 find_package(otterbrix REQUIRED)
-find_package(Catch2 3 REQUIRED)
-find_package(Boost 1.88.0 REQUIRED)
-find_package(Threads)
 
 add_executable(test_package test.cpp)
+target_compile_features(test_package PRIVATE cxx_std_20)
+target_link_libraries(test_package PRIVATE otterbrix::otterbrix)
 
-target_link_libraries(test_package
-    PRIVATE
-    Boost::boost
-    Threads::Threads
-    otterbrix::otterbrix
-    Catch2::Catch2
-    absl::flat_hash_map
-    absl::node_hash_map
-)
+if(NOT COMMAND otterbrix_add_parser_extension)
+    message(FATAL_ERROR "otterbrix_add_parser_extension() is not provided by find_package(otterbrix)")
+endif()
