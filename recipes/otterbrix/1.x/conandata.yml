@@ -1,9 +1,9 @@
 sources:
-  "1.0.0b2-rc-6":
-    url: "https://github.com/otterbrix/otterbrix/archive/refs/tags/1.0.0b2-rc-6.tar.gz"
-    sha256: "dbd095a41fa554b62debef4ace977ae3be4aef1651b49e239de1656f3cbaa3ee"
+  "1.0.0b2-rc-7":
+    url: "https://github.com/otterbrix/otterbrix/archive/refs/tags/1.0.0b2-rc-7.tar.gz"
+    sha256: "aa470986cf11ce4ae088aef65c324c08cafe3118577a83bb7fce2f5ffa2c484d"
 patches:
-  "1.0.0b2-rc-6":
+  "1.0.0b2-rc-7":
     - patch_file: "patches/fix-flex-bison-output-dir.patch"
       patch_description: "Create output directory for flex/bison generated files"
       patch_type: "bugfix"
