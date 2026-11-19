@@ -2,7 +2,3 @@ sources:
   "2.0.1":
     url: "https://github.com/otterbrix/actor-zeta/archive/2.0.1.tar.gz"
     sha256: "a68f0bfd0c236008fa788c13c909fad5ed01609b02d877792b248070fed64425"
-
-  "2.0.0":
-    url: "https://github.com/otterbrix/actor-zeta/archive/2.0.0.tar.gz"
-    sha256: "ffde20bdfe72619058ef7b29acb402791d3f462de4efee81095a88422b8a5c37"
